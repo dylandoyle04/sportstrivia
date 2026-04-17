@@ -1,0 +1,288 @@
+.app {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.picker h1 {
+  font-size: 2.25rem;
+  margin: 0 0 0.25rem;
+}
+
+.sub {
+  color: #8a8a8a;
+  margin: 0 0 2rem;
+}
+
+.league-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.league-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 1.75rem 1.5rem;
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  background: #141414;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: transform 0.08s ease, border-color 0.08s ease;
+}
+
+.league-card:hover {
+  border-color: #4a8cff;
+  transform: translateY(-2px);
+}
+
+.league-card-name {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.league-card-count {
+  font-size: 0.8rem;
+  color: #8a8a8a;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #8a8a8a;
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0 0 0.75rem;
+  cursor: pointer;
+  transition: color 0.08s ease;
+}
+
+.back-btn:hover {
+  color: #4a8cff;
+}
+
+.league-group {
+  margin-bottom: 2.5rem;
+}
+
+.league-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #4a8cff;
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.league-count {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #8a8a8a;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.team-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  padding: 1rem;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  background: #141414;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: transform 0.08s ease, border-color 0.08s ease;
+}
+
+.team-card:hover {
+  border-color: #4a8cff;
+  transform: translateY(-2px);
+}
+
+.team-name {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.team-competition {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: #8a8a8a;
+  text-transform: uppercase;
+}
+
+.placeholder {
+  padding: 2rem;
+  border: 1px dashed #333;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.placeholder button {
+  margin-top: 1rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  border: 1px solid #4a8cff;
+  background: transparent;
+  color: #4a8cff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.loader {
+  padding: 3rem;
+  text-align: center;
+  color: #8a8a8a;
+}
+
+.quiz .progress {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #8a8a8a;
+  margin-bottom: 1rem;
+}
+
+.prompt {
+  font-size: 1.5rem;
+  margin: 0 0 1.5rem;
+  line-height: 1.35;
+}
+
+.choices {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.choice {
+  padding: 1rem 1.1rem;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  background: #141414;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.08s ease, background 0.08s ease;
+}
+
+.choice:hover:not(:disabled) {
+  border-color: #4a8cff;
+}
+
+.choice:disabled {
+  cursor: default;
+}
+
+.choice.correct {
+  border-color: #2ecc71;
+  background: rgba(46, 204, 113, 0.15);
+}
+
+.choice.wrong {
+  border-color: #e74c3c;
+  background: rgba(231, 76, 60, 0.15);
+}
+
+.score {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.score-team {
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #4a8cff;
+  margin: 0 0 0.5rem;
+}
+
+.score-number {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0.5rem 0;
+}
+
+.score-value {
+  font-size: 5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.score-total {
+  font-size: 1.75rem;
+  color: #8a8a8a;
+}
+
+.score-pct {
+  color: #8a8a8a;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.score-message {
+  font-size: 1.1rem;
+  margin: 0 0 2rem;
+}
+
+.score-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 0.8rem 1.2rem;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary {
+  border: none;
+  background: #4a8cff;
+  color: #0b0b0b;
+}
+
+.btn-primary:hover {
+  background: #6aa0ff;
+}
+
+.btn-secondary {
+  border: 1px solid #2a2a2a;
+  background: transparent;
+  color: #ececec;
+}
+
+.btn-secondary:hover {
+  border-color: #4a8cff;
+}
