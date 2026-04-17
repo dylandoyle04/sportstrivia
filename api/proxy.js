@@ -32,6 +32,9 @@ export default async function handler(req) {
     headers: {
       'Content-Type': upstreamRes.headers.get('Content-Type') ?? 'application/json',
       'Cache-Control': 'public, max-age=60',
+      'X-Debug-Url': req.url,
+      'X-Debug-Service': service,
+      'X-Debug-Pathname': url.pathname,
     },
   });
 }
