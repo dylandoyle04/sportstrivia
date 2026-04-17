@@ -11,22 +11,18 @@ const UPSTREAMS = {
 export default async function handler(req) {
   const url = new URL(req.url);
   const parts = url.pathname.split('/').filter(Boolean);
-
-  const service = url.searchParams.get('_service') ?? parts[1];
-  const pathFromQuery = url.searchParams.get('_path');
-  const rest = pathFromQuery ?? parts.slice(2).join('/');
+  const service = parts[1];
+  const rest = parts.slice(2).join('/');
 
   const upstream = UPSTREAMS[service];
   if (!upstream) {
-    return new Response(`Unknown service: ${service}`, { status: 404 });
+    return new Response(
+      JSON.stringify({ error: 'unknown service', pathname: url.pathname, service, url: req.url }),
+      { status: 404, headers: { 'Content-Type': 'application/json' } },
+    );
   }
 
-  const passthrough = new URLSearchParams(url.searchParams);
-  passthrough.delete('_service');
-  passthrough.delete('_path');
-  const qs = passthrough.toString();
-
-  const target = `${upstream.base}/${rest}${qs ? `?${qs}` : ''}`;
+  const target = `${upstream.base}/${rest}${url.search}`;
   const headers = upstream.auth ? upstream.auth() : {};
   const upstreamRes = await fetch(target, { headers, redirect: 'follow' });
 
