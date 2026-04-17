@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/api/nhl/:path*", "destination": "/api/nhl" },
     { "source": "/api/mlb/:path*", "destination": "https://statsapi.mlb.com/:path*" }
   ]
 }
