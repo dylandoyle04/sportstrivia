@@ -17,10 +17,10 @@ export default defineConfig(({ mode }) => {
             Authorization: env.BALLDONTLIE_API_KEY ?? '',
           },
         },
-        '/api/nhl': {
+        '/api/hockey': {
           target: 'https://api-web.nhle.com',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/nhl/, ''),
+          rewrite: (path) => path.replace(/^\/api\/hockey/, ''),
         },
         '/api/mlb': {
           target: 'https://statsapi.mlb.com',

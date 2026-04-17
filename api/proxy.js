@@ -5,7 +5,7 @@ const UPSTREAMS = {
     base: 'https://api.balldontlie.io/v1',
     auth: () => ({ Authorization: process.env.BALLDONTLIE_API_KEY ?? '' }),
   },
-  nhl: { base: 'https://api-web.nhle.com' },
+  hockey: { base: 'https://api-web.nhle.com' },
 };
 
 export default async function handler(req) {
