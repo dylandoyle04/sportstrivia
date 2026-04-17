@@ -1,8 +1,8 @@
 {
   "rewrites": [
-    { "source": "/api/balldontlie/:path*", "destination": "/api/proxy" },
-    { "source": "/api/hockey/:path*", "destination": "/api/proxy" },
-    { "source": "/api/puck/:path*", "destination": "/api/proxy" },
+    { "source": "/api/balldontlie/:path*", "destination": "/api/proxy?_x=bdl" },
+    { "source": "/api/hockey/:path*", "destination": "/api/proxy?_x=hky" },
+    { "source": "/api/puck/:path*", "destination": "/api/proxy?_x=pck" },
     { "source": "/api/mlb/:path*", "destination": "https://statsapi.mlb.com/:path*" }
   ]
 }
