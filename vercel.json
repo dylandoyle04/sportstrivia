@@ -1,5 +1,7 @@
 {
   "rewrites": [
+    { "source": "/api/balldontlie/:path*", "destination": "/api/proxy?_service=balldontlie&_path=:path*" },
+    { "source": "/api/nhl/:path*", "destination": "/api/proxy?_service=nhl&_path=:path*" },
     { "source": "/api/mlb/:path*", "destination": "https://statsapi.mlb.com/:path*" }
   ]
 }
