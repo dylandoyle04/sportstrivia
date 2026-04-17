@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/nhl/:path*", "destination": "/api/nhl" },
+    { "source": "/api/nhl/:path*", "destination": "/api/balldontlie/nhl/:path*" },
     { "source": "/api/mlb/:path*", "destination": "https://statsapi.mlb.com/:path*" }
   ]
 }
