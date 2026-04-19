@@ -1,16 +1,59 @@
 :root {
   color-scheme: dark;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --bg: #0d0503;
+  --bg-panel: #2b0d05;
+  --bg-panel-alt: #4a1409;
+  --ink: #ffe4b5;
+  --ink-dim: #d4896e;
+  --accent: #ff4e1a;
+  --accent-green: #a8c850;
+  --accent-red: #ff2d1f;
+  --accent-blue: #ffb347;
+  --border: #ffe4b5;
+  --shadow: #000;
+
+  font-family: 'VT323', 'Courier New', monospace;
+  font-size: 18px;
   line-height: 1.5;
 }
 
 body {
   margin: 0;
-  background: #0b0b0b;
-  color: #ececec;
   min-height: 100vh;
+  background-color: var(--bg);
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 3px,
+      rgba(0, 0, 0, 0.15) 3px,
+      rgba(0, 0, 0, 0.15) 4px
+    );
+  color: var(--ink);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 * {
   box-sizing: border-box;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  line-height: 1.25;
+  letter-spacing: 0;
+  text-shadow:
+    3px 3px 0 var(--shadow),
+    0 0 6px rgba(255, 78, 26, 0.95),
+    0 0 14px rgba(255, 78, 26, 0.7),
+    0 0 28px rgba(255, 140, 66, 0.4);
+}
+
+button {
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+}
+
+input {
+  font-family: 'VT323', 'Courier New', monospace;
+  font-size: 1.1rem;
 }

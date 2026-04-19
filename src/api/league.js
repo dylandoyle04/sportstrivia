@@ -28,7 +28,10 @@ function normalizePlayer(athlete) {
     positionAbbr: athlete.position?.abbreviation ?? null,
     jersey: athlete.jersey ?? null,
     age: athlete.age ?? null,
+    height: athlete.displayHeight ?? null,
+    weight: athlete.displayWeight ?? null,
     college: athlete.college?.name ?? null,
+    country: athlete.birthPlace?.country ?? athlete.citizenship ?? null,
   };
 }
 

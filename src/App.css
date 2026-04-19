@@ -1,74 +1,126 @@
 .app {
-  max-width: 900px;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: 1.5rem 1.25rem 3rem;
 }
 
+/* ---------- Header ---------- */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  background: var(--bg-panel);
+  border: 3px solid var(--border);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.app-header-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.7rem;
+  color: var(--accent);
+  text-shadow: 2px 2px 0 var(--shadow);
+  letter-spacing: 0;
+}
+
+/* ---------- Picker ---------- */
+
 .picker h1 {
-  font-size: 2.25rem;
-  margin: 0 0 0.25rem;
+  font-size: 1.9rem;
+  margin: 0 0 0.75rem;
+  color: var(--accent);
 }
 
 .sub {
-  color: #8a8a8a;
-  margin: 0 0 2rem;
+  font-size: 1.25rem;
+  color: var(--ink-dim);
+  margin: 0 0 1.75rem;
 }
+
+/* ---------- League grid (drill-down cards) ---------- */
 
 .league-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
 }
 
 .league-card {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.5rem;
-  padding: 1.75rem 1.5rem;
-  border: 1px solid #2a2a2a;
-  border-radius: 14px;
-  background: #141414;
-  color: inherit;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem 1.25rem;
+  border: 4px solid var(--border);
+  background: var(--bg-panel);
+  color: var(--ink);
   cursor: pointer;
   text-align: left;
-  font: inherit;
-  transition: transform 0.08s ease, border-color 0.08s ease;
+  box-shadow: 5px 5px 0 var(--shadow);
+  transition: none;
+}
+
+.league-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.league-card-logo {
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 .league-card:hover {
-  border-color: #4a8cff;
-  transform: translateY(-2px);
+  background: var(--bg-panel-alt);
+  color: var(--accent);
+}
+
+.league-card:active {
+  transform: translate(5px, 5px);
+  box-shadow: 0 0 0 var(--shadow);
 }
 
 .league-card-name {
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.1rem;
+  text-shadow: 2px 2px 0 var(--shadow);
 }
 
 .league-card-count {
-  font-size: 0.8rem;
-  color: #8a8a8a;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.6rem;
+  color: var(--ink-dim);
   letter-spacing: 0.05em;
-  text-transform: uppercase;
 }
+
+/* ---------- Back button ---------- */
 
 .back-btn {
   background: none;
   border: none;
-  color: #8a8a8a;
-  font: inherit;
-  font-size: 0.9rem;
-  padding: 0 0 0.75rem;
+  color: var(--accent-blue);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.7rem;
+  padding: 0.5rem 0 1rem;
   cursor: pointer;
-  transition: color 0.08s ease;
+  letter-spacing: 0;
 }
 
 .back-btn:hover {
-  color: #4a8cff;
+  color: var(--accent);
 }
+
+/* ---------- Division section ---------- */
 
 .league-group {
   margin-bottom: 2.5rem;
@@ -77,100 +129,97 @@
 .league-heading {
   display: flex;
   align-items: baseline;
-  gap: 0.6rem;
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #4a8cff;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--accent);
   margin: 0 0 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #2a2a2a;
+  padding-bottom: 0.6rem;
+  border-bottom: 3px dashed var(--ink-dim);
+  text-transform: uppercase;
 }
 
 .league-count {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #8a8a8a;
-  letter-spacing: 0;
-  text-transform: none;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.55rem;
+  color: var(--ink-dim);
+  text-shadow: none;
 }
+
+/* ---------- Team grid ---------- */
 
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 0.75rem;
 }
 
 .team-card {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.3rem;
-  padding: 1rem;
-  border: 1px solid #2a2a2a;
-  border-radius: 12px;
-  background: #141414;
-  color: inherit;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  border: 3px solid var(--border);
+  background: var(--bg-panel);
+  color: var(--ink);
   cursor: pointer;
   text-align: left;
-  font: inherit;
-  transition: transform 0.08s ease, border-color 0.08s ease;
+  box-shadow: 4px 4px 0 var(--shadow);
+  transition: none;
+  font-family: 'VT323', monospace;
+}
+
+.team-card-logo {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
 .team-card:hover {
-  border-color: #4a8cff;
-  transform: translateY(-2px);
+  background: var(--bg-panel-alt);
+  color: var(--accent);
+}
+
+.team-card:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--shadow);
 }
 
 .team-name {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.2rem;
+  line-height: 1.15;
 }
 
 .team-competition {
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  color: #8a8a8a;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.55rem;
+  color: var(--ink-dim);
   text-transform: uppercase;
 }
 
-.placeholder {
-  padding: 2rem;
-  border: 1px dashed #333;
-  border-radius: 12px;
-  text-align: center;
-}
-
-.placeholder button {
-  margin-top: 1rem;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  border: 1px solid #4a8cff;
-  background: transparent;
-  color: #4a8cff;
-  font: inherit;
-  cursor: pointer;
-}
-
-.loader {
-  padding: 3rem;
-  text-align: center;
-  color: #8a8a8a;
-}
+/* ---------- Quiz ---------- */
 
 .quiz .progress {
   display: flex;
   justify-content: space-between;
-  font-size: 0.85rem;
-  color: #8a8a8a;
-  margin-bottom: 1rem;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.7rem;
+  color: var(--ink-dim);
+  margin-bottom: 1.25rem;
 }
 
 .prompt {
-  font-size: 1.5rem;
-  margin: 0 0 1.5rem;
-  line-height: 1.35;
+  font-family: 'VT323', monospace;
+  font-size: 1.7rem;
+  line-height: 1.25;
+  margin: 0 0 1.75rem;
+  padding: 1.25rem;
+  background: var(--bg-panel);
+  border: 3px solid var(--border);
+  box-shadow: 5px 5px 0 var(--shadow);
+  white-space: pre-wrap;
+  color: var(--ink);
 }
 
 .choices {
@@ -179,19 +228,25 @@
 }
 
 .choice {
-  padding: 1rem 1.1rem;
-  border: 1px solid #2a2a2a;
-  border-radius: 10px;
-  background: #141414;
-  color: inherit;
-  font: inherit;
+  padding: 0.95rem 1rem;
+  border: 3px solid var(--border);
+  background: var(--bg-panel);
+  color: var(--ink);
+  font-family: 'VT323', monospace;
+  font-size: 1.2rem;
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.08s ease, background 0.08s ease;
+  box-shadow: 4px 4px 0 var(--shadow);
+  transition: none;
 }
 
 .choice:hover:not(:disabled) {
-  border-color: #4a8cff;
+  background: var(--bg-panel-alt);
+}
+
+.choice:active:not(:disabled) {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--shadow);
 }
 
 .choice:disabled {
@@ -199,90 +254,242 @@
 }
 
 .choice.correct {
-  border-color: #2ecc71;
-  background: rgba(46, 204, 113, 0.15);
+  background: var(--accent-green);
+  border-color: var(--ink);
+  color: var(--bg);
 }
 
 .choice.wrong {
-  border-color: #e74c3c;
-  background: rgba(231, 76, 60, 0.15);
+  background: var(--accent-red);
+  border-color: var(--ink);
+  color: var(--ink);
 }
+
+/* ---------- Score screen ---------- */
 
 .score {
   text-align: center;
-  padding: 2rem 1rem;
+  padding: 2rem 1rem 1rem;
 }
 
 .score-team {
-  font-size: 0.8rem;
-  letter-spacing: 0.1em;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0;
+  color: var(--accent-blue);
+  margin: 0 0 1rem;
   text-transform: uppercase;
-  color: #4a8cff;
-  margin: 0 0 0.5rem;
 }
 
 .score-number {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 0.4rem;
-  margin: 0.5rem 0;
+  gap: 0.5rem;
+  margin: 1rem 0;
 }
 
 .score-value {
-  font-size: 5rem;
-  font-weight: 700;
-  line-height: 1;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 4rem;
+  color: var(--accent);
+  text-shadow: 5px 5px 0 var(--shadow);
 }
 
 .score-total {
-  font-size: 1.75rem;
-  color: #8a8a8a;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.5rem;
+  color: var(--ink-dim);
 }
 
 .score-pct {
-  color: #8a8a8a;
-  margin: 0.25rem 0 0.75rem;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.8rem;
+  color: var(--ink-dim);
+  margin: 0 0 1rem;
+  letter-spacing: 0;
 }
 
 .score-message {
-  font-size: 1.1rem;
+  font-family: 'VT323', monospace;
+  font-size: 1.4rem;
   margin: 0 0 2rem;
+  color: var(--ink);
 }
 
 .score-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  max-width: 360px;
+  gap: 1rem;
+  max-width: 380px;
   margin: 0 auto;
 }
 
+/* ---------- Buttons ---------- */
+
 .btn-primary,
 .btn-secondary {
-  padding: 0.8rem 1.2rem;
-  border-radius: 10px;
-  font: inherit;
-  font-weight: 600;
+  padding: 0.85rem 1.2rem;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.85rem;
   cursor: pointer;
+  border: 4px solid var(--border);
+  box-shadow: 5px 5px 0 var(--shadow);
+  text-shadow: 2px 2px 0 var(--shadow);
+  transition: none;
+  letter-spacing: 0;
 }
 
 .btn-primary {
-  border: none;
-  background: #4a8cff;
-  color: #0b0b0b;
+  background: var(--accent);
+  color: var(--bg);
+  text-shadow: none;
 }
 
-.btn-primary:hover {
-  background: #6aa0ff;
+.btn-primary:hover:not(:disabled) {
+  background: #ffe47a;
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translate(5px, 5px);
+  box-shadow: 0 0 0 var(--shadow);
+}
+
+.btn-primary:disabled {
+  background: var(--bg-panel-alt);
+  color: var(--ink-dim);
+  cursor: not-allowed;
+  text-shadow: none;
 }
 
 .btn-secondary {
-  border: 1px solid #2a2a2a;
-  background: transparent;
-  color: #ececec;
+  background: var(--bg-panel);
+  color: var(--ink);
 }
 
 .btn-secondary:hover {
-  border-color: #4a8cff;
+  background: var(--bg-panel-alt);
+  color: var(--accent);
+}
+
+.btn-secondary:active {
+  transform: translate(5px, 5px);
+  box-shadow: 0 0 0 var(--shadow);
+}
+
+/* ---------- Loader / placeholder ---------- */
+
+.loader {
+  padding: 3rem;
+  text-align: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.8rem;
+  color: var(--accent);
+  text-shadow: 3px 3px 0 var(--shadow);
+}
+
+.placeholder {
+  padding: 2rem;
+  border: 3px dashed var(--ink-dim);
+  text-align: center;
+  background: var(--bg-panel);
+}
+
+.placeholder button {
+  margin-top: 1rem;
+  padding: 0.6rem 1.2rem;
+  border: 3px solid var(--border);
+  background: var(--accent);
+  color: var(--bg);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.75rem;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+/* ---------- Auth screens ---------- */
+
+.auth {
+  max-width: 420px;
+  margin: 2rem auto 0;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: var(--bg-panel);
+  border: 4px solid var(--border);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.auth-logo {
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 1.25rem;
+  display: block;
+  image-rendering: pixelated;
+}
+
+.auth-title {
+  font-size: 1.5rem;
+  margin: 0 0 0.75rem;
+  color: var(--accent);
+}
+
+.auth-tagline {
+  font-family: 'VT323', monospace;
+  font-size: 1.25rem;
+  color: var(--ink-dim);
+  margin: 0 0 1.75rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  text-align: left;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.auth-field span {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.65rem;
+  color: var(--ink-dim);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.auth-field input {
+  padding: 0.85rem 1rem;
+  border: 3px solid var(--border);
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'VT323', monospace;
+  font-size: 1.25rem;
+  box-shadow: inset 3px 3px 0 var(--shadow);
+}
+
+.auth-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.auth-error {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 3px solid var(--accent-red);
+  background: rgba(255, 75, 75, 0.15);
+  font-family: 'VT323', monospace;
+  font-size: 1.1rem;
+  color: var(--accent-red);
+}
+
+.auth-fineprint {
+  margin: 0.75rem 0 0;
+  font-family: 'VT323', monospace;
+  font-size: 1.05rem;
+  color: var(--ink-dim);
+  text-align: center;
 }
