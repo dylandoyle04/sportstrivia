@@ -1,54 +1,62 @@
-import { useEffect, useRef, useState } from 'react';
-import { loadQuiz } from '../questions/loadQuiz';
+import { useRef, useState } from 'react';
 import { useCountdown } from '../hooks/useCountdown';
+import { teamLogoUrl, leagueLogoUrl, leagueLogoFallback, leagueSlug } from '../api/logos';
 import Timer from './Timer';
 
-export default function QuizScreen({ team, onDone, onBack, timerConfig }) {
-  const [status, setStatus] = useState('loading');
-  const [questions, setQuestions] = useState([]);
-  const [error, setError] = useState(null);
+function QuestionContext({ question }) {
+  const team = question?.player?.team;
+  if (!team) return null;
+  const leagueSrc = leagueLogoUrl(team.league);
+  return (
+    <div className="question-context">
+      {leagueSrc && (
+        <img
+          src={leagueSrc}
+          alt=""
+          className={`ctx-league-logo ctx-league-logo--${leagueSlug(team.league)}`}
+          onError={(e) => {
+            const fb = leagueLogoFallback(team.league);
+            if (fb && e.currentTarget.src !== window.location.origin + fb) {
+              e.currentTarget.src = fb;
+            }
+          }}
+        />
+      )}
+      <img src={teamLogoUrl(team)} alt="" className="ctx-team-logo" />
+      <span className="ctx-team-name">{team.name}</span>
+    </div>
+  );
+}
+
+export default function QuizRunner({
+  questions,
+  timerSeconds,
+  timerMode = 'per-question',
+  onDone,
+}) {
   const [index, setIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState(null);
+  const startedAt = useRef(Date.now());
   const scoreRef = useRef(0);
+  const indexRef = useRef(0);
   scoreRef.current = score;
+  indexRef.current = index;
+  const endedRef = useRef(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    setStatus('loading');
-    loadQuiz(team)
-      .then(({ questions }) => {
-        if (cancelled) return;
-        if (questions.length === 0) {
-          setError('Not enough data to build a quiz for this team.');
-          setStatus('error');
-          return;
-        }
-        setQuestions(questions);
-        setStatus('ready');
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setError(err.message);
-        setStatus('error');
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [team]);
-
-  const perQuestion = timerConfig?.mode === 'per-question';
-  const session = timerConfig?.mode === 'session';
-  const timerActive = status === 'ready' && !!timerConfig && (session || selected === null);
+  const isSession = timerMode === 'session';
+  const revealMs = isSession ? 900 : 2200;
 
   const remaining = useCountdown({
-    seconds: timerConfig?.seconds ?? 0,
-    resetKey: perQuestion ? index : 'session',
-    active: timerActive,
+    seconds: timerSeconds,
+    resetKey: isSession ? 'session' : index,
+    active: isSession ? !endedRef.current : selected === null,
     onExpire: () => {
-      if (session) {
-        onDone(scoreRef.current, index);
-      } else if (perQuestion && selected === null) {
+      if (isSession) {
+        if (endedRef.current) return;
+        endedRef.current = true;
+        onDone(scoreRef.current, indexRef.current + (selected !== null ? 1 : 0), timerSeconds * 1000);
+      } else if (selected === null) {
         handleAnswer(-1);
       }
     },
@@ -61,30 +69,15 @@ export default function QuizScreen({ team, onDone, onBack, timerConfig }) {
     const nextScore = correct ? score + 1 : score;
     if (correct) setScore(nextScore);
     setTimeout(() => {
+      if (endedRef.current) return;
       if (index + 1 >= questions.length) {
-        onDone(nextScore, questions.length);
+        endedRef.current = true;
+        onDone(nextScore, questions.length, Date.now() - startedAt.current);
       } else {
         setIndex(index + 1);
         setSelected(null);
       }
-    }, 2200);
-  }
-
-  if (status === 'loading') {
-    return (
-      <div className="loader">
-        <p>Loading {team.name} trivia…</p>
-      </div>
-    );
-  }
-
-  if (status === 'error') {
-    return (
-      <div className="placeholder">
-        <p>⚠️ {error}</p>
-        <button onClick={onBack}>Back to team picker</button>
-      </div>
-    );
+    }, revealMs);
   }
 
   const q = questions[index];
@@ -92,16 +85,15 @@ export default function QuizScreen({ team, onDone, onBack, timerConfig }) {
   return (
     <div className="quiz">
       <div className="progress">
-        <span>Question {index + 1} / {questions.length}</span>
+        {isSession ? <span /> : <span>Question {index + 1} / {questions.length}</span>}
         <span>Score: {score}</span>
       </div>
-      {timerConfig && (
-        <Timer
-          remaining={remaining}
-          total={timerConfig.seconds}
-          label={session ? 'ROUND' : 'TIME'}
-        />
-      )}
+      <Timer
+        remaining={remaining}
+        total={timerSeconds}
+        label={isSession ? 'ROUND' : 'TIME'}
+      />
+      <QuestionContext question={q} />
       <h2 className="prompt">{q.prompt}</h2>
       <div className="choices">
         {q.choices.map((choice, i) => {
@@ -124,9 +116,7 @@ export default function QuizScreen({ team, onDone, onBack, timerConfig }) {
       </div>
       {selected !== null && (
         <div className="verdict-overlay">
-          <h2
-            className={`verdict-text verdict-${selected === q.correctIndex ? 'correct' : 'wrong'}`}
-          >
+          <h2 className={`verdict-text verdict-${selected === q.correctIndex ? 'correct' : 'wrong'}`}>
             {selected === q.correctIndex ? 'CORRECT' : 'NOPE'}
           </h2>
           {q.player?.photo && (

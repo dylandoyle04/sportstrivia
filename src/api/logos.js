@@ -6,6 +6,10 @@ const LEAGUE_SPORT = {
   Soccer: 'soccer',
 };
 
+export function leagueSlug(league) {
+  return LEAGUE_SPORT[league] ?? null;
+}
+
 export function teamLogoUrl(team) {
   const sport = LEAGUE_SPORT[team.league];
   if (!sport) return null;

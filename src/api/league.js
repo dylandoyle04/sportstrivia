@@ -32,6 +32,7 @@ function normalizePlayer(athlete) {
     weight: athlete.displayWeight ?? null,
     college: athlete.college?.name ?? null,
     country: athlete.birthPlace?.country ?? athlete.citizenship ?? null,
+    photo: athlete.headshot?.href ?? null,
   };
 }
 
@@ -52,8 +53,13 @@ export async function loadTeamData(pickedTeam) {
     espn.getTeam(path.sport, path.league, pickedTeam.id),
     espn.getRoster(path.sport, path.league, pickedTeam.id),
   ]);
+  const players = roster
+    .map(normalizePlayer)
+    .filter((p) => p.name)
+    .map((p) => ({ ...p, team: pickedTeam }));
+
   return {
     team: normalizeTeam(teamInfo, pickedTeam),
-    players: roster.map(normalizePlayer).filter((p) => p.name),
+    players,
   };
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TEAMS } from '../teams';
-import { teamLogoUrl, leagueLogoUrl, leagueLogoFallback } from '../api/logos';
+import { teamLogoUrl, leagueLogoUrl, leagueLogoFallback, leagueSlug } from '../api/logos';
 
 const LEAGUES = [...new Set(TEAMS.map((t) => t.league))];
 const LEAGUE_COUNTS = Object.fromEntries(
@@ -26,13 +26,16 @@ function divisionsFor(league) {
   return order;
 }
 
-export default function TeamPicker({ onPick }) {
+export default function TeamPicker({ onPick, onBack }) {
   const [league, setLeague] = useState(null);
   const [competition, setCompetition] = useState(null);
 
   if (!league) {
     return (
       <div className="picker">
+        {onBack && (
+          <button className="back-btn" onClick={onBack}>← Other Modes</button>
+        )}
         <h1>Pick a league</h1>
         <p className="sub">Then pick a team to start the quiz.</p>
         <div className="league-grid">
@@ -49,7 +52,7 @@ export default function TeamPicker({ onPick }) {
               <img
                 src={leagueLogoUrl(l)}
                 alt=""
-                className="league-card-logo"
+                className={`league-card-logo league-card-logo--${leagueSlug(l)}`}
                 onError={(e) => {
                   const fallback = leagueLogoFallback(l);
                   if (fallback && e.currentTarget.src !== window.location.origin + fallback) {
