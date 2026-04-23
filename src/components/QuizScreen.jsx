@@ -41,7 +41,7 @@ export default function QuizScreen({ team, onDone, onBack, timerConfig }) {
   const session = timerConfig?.mode === 'session';
   const timerActive = status === 'ready' && !!timerConfig && (session || selected === null);
 
-  const remaining = useCountdown({
+  const { remaining } = useCountdown({
     seconds: timerConfig?.seconds ?? 0,
     resetKey: perQuestion ? index : 'session',
     active: timerActive,

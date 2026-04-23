@@ -701,6 +701,35 @@
   to { transform: translateY(-2px); }
 }
 
+.timer-flash {
+  position: absolute;
+  right: 1.5rem;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.4rem;
+  pointer-events: none;
+  animation: timerFlash 1.2s ease-out forwards;
+}
+
+.timer-flash--plus {
+  color: var(--accent-green);
+  text-shadow:
+    2px 2px 0 var(--shadow),
+    0 0 12px rgba(168, 200, 80, 0.9);
+}
+
+.timer-flash--minus {
+  color: var(--accent-red);
+  text-shadow:
+    2px 2px 0 var(--shadow),
+    0 0 12px rgba(255, 45, 31, 0.9);
+}
+
+@keyframes timerFlash {
+  0%   { opacity: 0; transform: translateY(0) scale(0.85); }
+  20%  { opacity: 1; transform: translateY(-8px) scale(1); }
+  100% { opacity: 0; transform: translateY(-44px) scale(1); }
+}
+
 .prompt {
   font-family: 'VT323', monospace;
   font-size: 1.7rem;

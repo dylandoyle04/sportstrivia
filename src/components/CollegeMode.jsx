@@ -55,6 +55,8 @@ export default function CollegeMode({ userId, onBack }) {
         questions={quiz.questions}
         timerSeconds={TIMER_SECONDS}
         timerMode="session"
+        correctBonus={3}
+        wrongPenalty={5}
         onDone={handleDone}
       />
     );

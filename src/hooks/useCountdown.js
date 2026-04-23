@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export function useCountdown({ seconds, resetKey, active = true, onExpire }) {
   const [remaining, setRemaining] = useState(seconds);
@@ -24,5 +24,9 @@ export function useCountdown({ seconds, resetKey, active = true, onExpire }) {
     return () => clearInterval(id);
   }, [active, resetKey, seconds]);
 
-  return remaining;
+  const addTime = useCallback((delta) => {
+    setRemaining((prev) => Math.max(0, prev + delta));
+  }, []);
+
+  return { remaining, addTime };
 }

@@ -32,11 +32,14 @@ export default function QuizRunner({
   questions,
   timerSeconds,
   timerMode = 'per-question',
+  correctBonus = 0,
+  wrongPenalty = 0,
   onDone,
 }) {
   const [index, setIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState(null);
+  const [bonusFlash, setBonusFlash] = useState(null);
   const startedAt = useRef(Date.now());
   const scoreRef = useRef(0);
   const indexRef = useRef(0);
@@ -47,7 +50,7 @@ export default function QuizRunner({
   const isSession = timerMode === 'session';
   const revealMs = isSession ? 900 : 2200;
 
-  const remaining = useCountdown({
+  const { remaining, addTime } = useCountdown({
     seconds: timerSeconds,
     resetKey: isSession ? 'session' : index,
     active: isSession ? !endedRef.current : selected === null,
@@ -68,6 +71,15 @@ export default function QuizRunner({
     const correct = choiceIndex === questions[index].correctIndex;
     const nextScore = correct ? score + 1 : score;
     if (correct) setScore(nextScore);
+
+    if (isSession && (correctBonus || wrongPenalty)) {
+      const delta = correct ? correctBonus : -wrongPenalty;
+      if (delta) {
+        addTime(delta);
+        setBonusFlash({ delta, key: Date.now() });
+      }
+    }
+
     setTimeout(() => {
       if (endedRef.current) return;
       if (index + 1 >= questions.length) {
@@ -93,6 +105,15 @@ export default function QuizRunner({
         total={timerSeconds}
         label={isSession ? 'ROUND' : 'TIME'}
       />
+      {bonusFlash && (
+        <div
+          key={bonusFlash.key}
+          className={`timer-flash timer-flash--${bonusFlash.delta > 0 ? 'plus' : 'minus'}`}
+          onAnimationEnd={() => setBonusFlash(null)}
+        >
+          {bonusFlash.delta > 0 ? `+${bonusFlash.delta}s` : `${bonusFlash.delta}s`}
+        </div>
+      )}
       <QuestionContext question={q} />
       <h2 className="prompt">{q.prompt}</h2>
       <div className="choices">
