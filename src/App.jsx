@@ -11,6 +11,7 @@ import DailyTrivia from './components/DailyTrivia';
 import GroupHub from './components/GroupHub';
 import GroupDetail from './components/GroupDetail';
 import CollegeMode from './components/CollegeMode';
+import LeagueMode from './components/LeagueMode';
 import LeaderboardScreen from './components/LeaderboardScreen';
 import { supabase, upsertProfile } from './api/supabase';
 import './App.css';
@@ -76,6 +77,8 @@ export default function App() {
       setScreen('picking');
     } else if (key === 'college') {
       setScreen('college');
+    } else if (key === 'league') {
+      setScreen('league-mode');
     } else {
       setStubKey(key);
       setScreen('coming-soon');
@@ -172,6 +175,9 @@ export default function App() {
           userId={session.user.id}
           onBack={() => setScreen('other-modes')}
         />
+      )}
+      {screen === 'league-mode' && (
+        <LeagueMode onBack={() => setScreen('other-modes')} />
       )}
       {screen === 'leaderboard' && (
         <LeaderboardScreen userId={session.user.id} onBack={goHome} />

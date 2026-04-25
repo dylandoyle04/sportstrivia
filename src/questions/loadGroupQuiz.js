@@ -1,6 +1,15 @@
 import { loadTeamData } from '../api/league';
-import { buildQuestionPool, selectByMix } from './generator';
+import {
+  buildQuestionPool,
+  selectByMix,
+  buildNbaTeamStatQuestions,
+  buildNhlTeamStatQuestions,
+  buildSoccerTeamStatQuestions,
+  buildMlbLeaderQuestions,
+} from './generator';
 import { createRng, dateSeed } from './seededRandom';
+import { getNbaStandings, getNhlStandings, getSoccerStandings } from '../api/standings';
+import { getMlbLeaders } from '../api/mlb';
 
 function hashString(s) {
   let h = 0;
@@ -26,6 +35,42 @@ export async function loadGroupQuiz({ groupId, teams, dateStr }) {
     );
     return buildQuestionPool({ team, players, otherPlayers }, rand);
   });
+
+  if (teams.some((t) => t.league === 'NBA')) {
+    try {
+      const standings = await getNbaStandings();
+      pool.push(...buildNbaTeamStatQuestions(standings, rand));
+    } catch { /* optional */ }
+  }
+
+  if (teams.some((t) => t.league === 'NHL')) {
+    try {
+      const standings = await getNhlStandings();
+      pool.push(...buildNhlTeamStatQuestions(standings, rand));
+    } catch { /* optional */ }
+  }
+
+  const soccerCompetitions = [...new Set(
+    teams.filter((t) => t.league === 'Soccer').map((t) => t.competition),
+  )];
+  for (const comp of soccerCompetitions) {
+    try {
+      const standings = await getSoccerStandings(comp);
+      pool.push(...buildSoccerTeamStatQuestions(standings, comp, rand));
+    } catch { /* optional */ }
+  }
+
+  if (teams.some((t) => t.league === 'MLB')) {
+    try {
+      const [hr, ba, era, hits] = await Promise.all([
+        getMlbLeaders('homeRuns', 'hitting'),
+        getMlbLeaders('battingAverage', 'hitting'),
+        getMlbLeaders('earnedRunAverage', 'pitching'),
+        getMlbLeaders('hits', 'hitting'),
+      ]);
+      pool.push(...buildMlbLeaderQuestions({ homeRuns: hr, battingAverage: ba, era, hits }, rand));
+    } catch { /* optional */ }
+  }
 
   const questions = selectByMix(pool, { easy: 3, medium: 3, hard: 3 }, rand);
   return { questions };

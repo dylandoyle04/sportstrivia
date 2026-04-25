@@ -33,3 +33,15 @@ export async function getScoreboard(sport, league) {
   const data = await get(`${sport}/${league}/scoreboard`);
   return data.events ?? [];
 }
+
+export async function getAthleteStats(sport, league, athleteId) {
+  const url = `https://site.web.api.espn.com/apis/common/v3/sports/${sport}/${league}/athletes/${athleteId}/stats`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`ESPN athlete stats ${res.status}`);
+  return res.json();
+}
+
+export async function getGameSummary(sport, league, eventId) {
+  const data = await get(`${sport}/${league}/summary?event=${eventId}`);
+  return data;
+}

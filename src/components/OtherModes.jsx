@@ -1,5 +1,6 @@
 const MODES = [
   { key: 'college', title: 'College Mode', desc: '60 seconds. Guess colleges. Unlimited attempts.' },
+  { key: 'league', title: 'League Trivia', desc: 'Pick a league. 10 questions. No timer.' },
   { key: 'free-play', title: 'Free Play', desc: 'Pick any team. No timer.' },
 ];
 

@@ -48,12 +48,13 @@ export default function QuizRunner({
   const endedRef = useRef(false);
 
   const isSession = timerMode === 'session';
+  const hasTimer = timerSeconds != null && timerSeconds > 0;
   const revealMs = isSession ? 900 : 2200;
 
   const { remaining, addTime } = useCountdown({
-    seconds: timerSeconds,
+    seconds: hasTimer ? timerSeconds : 0,
     resetKey: isSession ? 'session' : index,
-    active: isSession ? !endedRef.current : selected === null,
+    active: hasTimer && (isSession ? !endedRef.current : selected === null),
     onExpire: () => {
       if (isSession) {
         if (endedRef.current) return;
@@ -100,11 +101,13 @@ export default function QuizRunner({
         {isSession ? <span /> : <span>Question {index + 1} / {questions.length}</span>}
         <span>Score: {score}</span>
       </div>
-      <Timer
-        remaining={remaining}
-        total={timerSeconds}
-        label={isSession ? 'ROUND' : 'TIME'}
-      />
+      {hasTimer && (
+        <Timer
+          remaining={remaining}
+          total={timerSeconds}
+          label={isSession ? 'ROUND' : 'TIME'}
+        />
+      )}
       {bonusFlash && (
         <div
           key={bonusFlash.key}
