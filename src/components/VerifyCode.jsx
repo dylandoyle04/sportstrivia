@@ -13,11 +13,23 @@ export default function VerifyCode({ email, onBack }) {
     setStatus('verifying');
     setError(null);
 
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      email,
-      token: trimmed,
-      type: 'email',
-    });
+    let verifyError = null;
+    {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: trimmed,
+        type: 'email',
+      });
+      verifyError = error;
+    }
+    if (verifyError) {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: trimmed,
+        type: 'signup',
+      });
+      verifyError = error;
+    }
 
     if (verifyError) {
       setError(verifyError.message);

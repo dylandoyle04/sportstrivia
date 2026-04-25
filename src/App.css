@@ -1101,3 +1101,41 @@
   color: var(--ink-dim);
   text-align: center;
 }
+
+.auth-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0 0 1.25rem;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 0.7rem 0.5rem;
+  background: var(--bg-panel);
+  border: 3px solid var(--border);
+  color: var(--ink);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.7rem;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--shadow);
+  text-shadow: 2px 2px 0 var(--shadow);
+  letter-spacing: 0;
+  transition: none;
+}
+
+.auth-tab:hover {
+  color: var(--accent);
+}
+
+.auth-tab--on {
+  background: var(--accent);
+  color: var(--bg);
+  text-shadow: none;
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--shadow);
+}
+
+.auth-otp-link {
+  margin-top: 0.5rem;
+  text-align: center;
+}
