@@ -362,6 +362,238 @@ export function buildMlbLeaderQuestions(leadersByCategory, rand = Math.random) {
   return out;
 }
 
+export function buildLastNightQuestions(games, rand = Math.random) {
+  const out = [];
+  if (!games || games.length === 0) return out;
+  const seenPrompts = new Set();
+  function add(q) {
+    if (!q || seenPrompts.has(q.prompt)) return;
+    seenPrompts.add(q.prompt);
+    out.push(q);
+  }
+
+  // 1. Who won between A and B last night? (easy, 2-choice; bias to non-MLB)
+  const nonMlbGames = games.filter((g) => g.leagueKey !== 'MLB');
+  const mlbOnly = games.filter((g) => g.leagueKey === 'MLB');
+  const winGameOrder = [...shuffle(nonMlbGames, rand), ...shuffle(mlbOnly, rand)];
+  for (const g of winGameOrder.slice(0, 4)) {
+    const winner = g.winner === 'home' ? g.home : g.away;
+    const loser = g.winner === 'home' ? g.away : g.home;
+    add(mcq(
+      `Who won last night, ${g.home.name} or ${g.away.name}?`,
+      winner.name,
+      [loser.name],
+      null,
+      'easy',
+      rand,
+    ));
+  }
+
+  // 6. Final score of A vs B? (medium, 4-choice, same-league distractors)
+  for (const g of shuffle(games, rand).slice(0, 3)) {
+    const sameLeagueScores = [...new Set(
+      games.filter((og) => og.leagueKey === g.leagueKey).flatMap((og) => [
+        `${og.home.score}-${og.away.score}`,
+        `${og.away.score}-${og.home.score}`,
+      ]),
+    )];
+    const correct = `${g.home.score}-${g.away.score}`;
+    const reversed = `${g.away.score}-${g.home.score}`;
+    const distractors = pickN(sameLeagueScores.filter((s) => s !== correct && s !== reversed), 3, rand);
+    if (distractors.length !== 3) continue;
+    add(mcq(
+      `What was the final score of last night's ${g.home.name} vs ${g.away.name} game?`,
+      correct,
+      distractors,
+      null,
+      'medium',
+      rand,
+    ));
+  }
+
+  // 9. Runs scored by [MLB Team] last night? (hard, 4-choice — only 1)
+  const mlbGames = games.filter((g) => g.leagueKey === 'MLB');
+  const mlbScores = [...new Set(mlbGames.flatMap((g) => [g.home.score, g.away.score]))];
+  for (const g of shuffle(mlbGames, rand).slice(0, 1)) {
+    for (const side of ['home', 'away']) {
+      const team = g[side];
+      const correct = String(team.score);
+      const distractors = pickN(mlbScores.filter((s) => String(s) !== correct).map(String), 3, rand);
+      if (distractors.length !== 3) continue;
+      add(mcq(
+        `How many runs did the ${team.name} score last night?`,
+        correct,
+        distractors,
+        null,
+        'hard',
+        rand,
+      ));
+      break;
+    }
+  }
+
+  // 3. Most NBA points last night? (medium, 4-choice)
+  const nbaTeams = games.filter((g) => g.leagueKey === 'NBA').flatMap((g) => [
+    { name: g.home.name, score: g.home.score },
+    { name: g.away.name, score: g.away.score },
+  ]);
+  if (nbaTeams.length >= 4) {
+    const sorted = [...nbaTeams].sort((a, b) => b.score - a.score);
+    if (sorted[0].score > sorted[1].score) {
+      const top = sorted[0];
+      const distractors = pickN(nbaTeams.filter((t) => t.name !== top.name), 3, rand);
+      if (distractors.length === 3) {
+        add(mcq(
+          'Which NBA team scored the most points last night?',
+          top.name,
+          distractors.map((d) => d.name),
+          null,
+          'medium',
+          rand,
+        ));
+      }
+    }
+  }
+
+  // 5. Most MLB HRs last night? (medium, 4-choice)
+  const mlbHRs = mlbGames.flatMap((g) => [
+    { name: g.home.name, hr: g.home.homeRuns ?? 0 },
+    { name: g.away.name, hr: g.away.homeRuns ?? 0 },
+  ]);
+  if (mlbHRs.length >= 4) {
+    const sortedHR = [...mlbHRs].sort((a, b) => b.hr - a.hr);
+    if (sortedHR[0].hr > 0 && sortedHR[0].hr > sortedHR[1].hr) {
+      const top = sortedHR[0];
+      const distractors = pickN(mlbHRs.filter((t) => t.name !== top.name), 3, rand);
+      if (distractors.length === 3) {
+        add(mcq(
+          'Which MLB team hit the most home runs last night?',
+          top.name,
+          distractors.map((d) => d.name),
+          null,
+          'medium',
+          rand,
+        ));
+      }
+    }
+  }
+
+  // 11. Top scorer for [Team] last night (hard, 4-choice; teammates only)
+  const topScorerOrder = [
+    ...shuffle(nonMlbGames, rand),
+    ...shuffle(mlbOnly, rand),
+  ];
+  for (const g of topScorerOrder.slice(0, 4)) {
+    for (const side of ['home', 'away']) {
+      const team = g[side];
+      const scorer = team?.players?.[0];
+      if (!scorer?.name) continue;
+      const teammates = (team.players ?? [])
+        .slice(1)
+        .filter((p) => p?.name && p.name !== scorer.name);
+      const distractors = pickN(teammates, 3, rand);
+      if (distractors.length !== 3) continue;
+      const stat = g.leagueKey === 'NBA' ? 'scoring'
+        : g.leagueKey === 'NHL' ? 'points (goals + assists)'
+        : 'hitting';
+      add(mcq(
+        `Who led the ${team.name} in ${stat} last night?`,
+        scorer.name,
+        distractors.map((d) => d.name),
+        null,
+        'hard',
+        rand,
+      ));
+      break;
+    }
+  }
+
+  // 12a. Who led the NBA in scoring last night? (hard, 4-choice)
+  const nbaScorerList = games.filter((g) => g.leagueKey === 'NBA').flatMap((g) => g.nbaScorers ?? []);
+  if (nbaScorerList.length >= 4) {
+    const sortedNba = [...nbaScorerList].sort((a, b) => b.pts - a.pts);
+    if (sortedNba[0].pts > sortedNba[1].pts) {
+      const top = sortedNba[0];
+      const distractors = pickN(sortedNba.slice(1, 15), 3, rand);
+      if (distractors.length === 3) {
+        add(mcq(
+          'Who led the NBA in scoring last night?',
+          top.name,
+          distractors.map((d) => d.name),
+          null,
+          'hard',
+          rand,
+        ));
+      }
+    }
+  }
+
+  // 12b. Who led NHL skaters in points (G+A) last night? (hard, 4-choice)
+  const nhlPointsList = games
+    .filter((g) => g.leagueKey === 'NHL')
+    .flatMap((g) => [g.topScorerHome, g.topScorerAway])
+    .filter((s) => s?.name);
+  if (nhlPointsList.length >= 4) {
+    const sortedNhl = [...nhlPointsList].sort((a, b) => b.pts - a.pts);
+    if (sortedNhl[0].pts > sortedNhl[1].pts) {
+      const top = sortedNhl[0];
+      const distractors = pickN(sortedNhl.slice(1), 3, rand);
+      if (distractors.length === 3) {
+        add(mcq(
+          'Who led NHL skaters in points (goals + assists) last night?',
+          top.name,
+          distractors.map((d) => d.name),
+          null,
+          'hard',
+          rand,
+        ));
+      }
+    }
+  }
+
+  // 12. Which NBA player scored 30+ points last night? (hard, 4-choice)
+  const thirtyPlus = nbaScorerList.filter((s) => s.pts >= 30);
+  const underThirty = nbaScorerList.filter((s) => s.pts > 5 && s.pts < 30);
+  if (thirtyPlus.length > 0 && underThirty.length >= 3) {
+    const top = pickN(thirtyPlus, 1, rand)[0];
+    const distractors = pickN(underThirty, 3, rand);
+    if (distractors.length === 3) {
+      add(mcq(
+        'Which NBA player scored 30+ points last night?',
+        top.name,
+        distractors.map((d) => d.name),
+        null,
+        'hard',
+        rand,
+      ));
+    }
+  }
+
+  // 15. Did [top scorer]'s team win last night? (hard, 2-choice)
+  for (const g of shuffle(games, rand).slice(0, 3)) {
+    const winnerSide = g.winner;
+    const candidate = winnerSide === 'home'
+      ? (g.topScorerAway ?? g.topScorerHome)
+      : (g.topScorerHome ?? g.topScorerAway);
+    if (!candidate?.name) continue;
+    const playerSide = candidate === g.topScorerHome ? 'home' : 'away';
+    const teamWon = playerSide === winnerSide;
+    const correct = teamWon ? 'Yes' : 'No';
+    const distractor = teamWon ? 'No' : 'Yes';
+    add(mcq(
+      `Did ${candidate.name}'s team win last night?`,
+      correct,
+      [distractor],
+      null,
+      'hard',
+      rand,
+    ));
+    break;
+  }
+
+  return shuffle(out, rand);
+}
+
 export function buildSoccerTeamStatQuestions(standings, competition, rand = Math.random) {
   if (!Array.isArray(standings) || standings.length === 0) return [];
   const out = [];

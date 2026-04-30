@@ -77,8 +77,8 @@ export default function SignIn({ onCodeSent }) {
 
   return (
     <div className="auth">
-      <img src="/logo.svg" alt="Super Fan" className="auth-logo" />
-      <h1 className="auth-title">Super Fan</h1>
+      <img src="/logo.png" alt="You Know Ball?" className="auth-logo" />
+      <h1 className="auth-title">You Know Ball?</h1>
 
       <div className="auth-tabs">
         <button

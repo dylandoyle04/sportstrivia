@@ -39,7 +39,7 @@ export default function VerifyCode({ email, onBack }) {
 
   return (
     <div className="auth">
-      <img src="/logo.svg" alt="Super Fan" className="auth-logo" />
+      <img src="/logo.png" alt="You Know Ball?" className="auth-logo" />
       <h1 className="auth-title">Check your email</h1>
       <p className="auth-tagline">
         We sent an 8-character code to <strong>{email}</strong>.

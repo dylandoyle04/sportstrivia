@@ -1,5 +1,6 @@
 const MODES = [
   { key: 'daily', title: 'Daily Trivia', desc: '9 questions. One shot a day.' },
+  { key: 'last-night', title: 'Last Night', desc: 'Yesterday\'s games. One shot a day.' },
   { key: 'group', title: 'Group', desc: 'Play with your friend group.' },
   { key: 'leaderboard', title: 'Leaderboard', desc: 'Daily and group rankings.' },
   { key: 'other', title: 'Other Modes', desc: 'College mode and more.' },
@@ -8,7 +9,7 @@ const MODES = [
 export default function HomeScreen({ onSelect }) {
   return (
     <div className="home">
-      <h1>Super Fan</h1>
+      <img src="/logo.png" alt="You Know Ball?" className="home-logo" />
       <p className="sub">Choose your game mode.</p>
       <div className="mode-grid">
         {MODES.map((mode) => (

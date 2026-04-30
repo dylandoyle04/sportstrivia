@@ -15,16 +15,17 @@ export async function upsertProfile({ id, email, displayName }) {
     .upsert({ id, email, display_name: displayName }, { onConflict: 'id' });
 }
 
-export async function getMyDailyScore(userId, quizDate) {
+export async function getMyDailyScore(userId, quizDate, mode = 'overall') {
   return supabase
     .from('daily_scores')
     .select('score, total, duration_ms')
     .eq('user_id', userId)
     .eq('quiz_date', quizDate)
+    .eq('quiz_mode', mode)
     .maybeSingle();
 }
 
-export async function submitDailyScore({ userId, quizDate, score, total, durationMs }) {
+export async function submitDailyScore({ userId, quizDate, score, total, durationMs, mode = 'overall' }) {
   return supabase
     .from('daily_scores')
     .insert({
@@ -33,14 +34,16 @@ export async function submitDailyScore({ userId, quizDate, score, total, duratio
       score,
       total,
       duration_ms: durationMs,
+      quiz_mode: mode,
     });
 }
 
-export async function getDailyLeaderboard(quizDate, limit = 50) {
+export async function getDailyLeaderboard(quizDate, mode = 'overall', limit = 50) {
   return supabase
     .from('daily_scores')
     .select('score, total, duration_ms, user_id, users!inner(display_name)')
     .eq('quiz_date', quizDate)
+    .eq('quiz_mode', mode)
     .order('score', { ascending: false })
     .order('duration_ms', { ascending: true, nullsFirst: false })
     .limit(limit);

@@ -8,6 +8,7 @@ import HomeScreen from './components/HomeScreen';
 import OtherModes from './components/OtherModes';
 import ComingSoon from './components/ComingSoon';
 import DailyTrivia from './components/DailyTrivia';
+import LastNight from './components/LastNight';
 import GroupHub from './components/GroupHub';
 import GroupDetail from './components/GroupDetail';
 import CollegeMode from './components/CollegeMode';
@@ -61,6 +62,8 @@ export default function App() {
       setScreen('other-modes');
     } else if (key === 'daily') {
       setScreen('daily');
+    } else if (key === 'last-night') {
+      setScreen('last-night');
     } else if (key === 'group') {
       setGroupId(null);
       setScreen('group-hub');
@@ -155,6 +158,9 @@ export default function App() {
       {screen === 'home' && <HomeScreen onSelect={handleHomeSelect} />}
       {screen === 'daily' && (
         <DailyTrivia userId={session.user.id} onBack={goHome} />
+      )}
+      {screen === 'last-night' && (
+        <LastNight userId={session.user.id} onBack={goHome} />
       )}
       {screen === 'group-hub' && (
         <GroupHub

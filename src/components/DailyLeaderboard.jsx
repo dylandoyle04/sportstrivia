@@ -9,19 +9,19 @@ function formatDuration(ms) {
   return m > 0 ? `${m}m ${r}s` : `${r}s`;
 }
 
-export default function DailyLeaderboard({ quizDate, highlightUserId }) {
+export default function DailyLeaderboard({ quizDate, highlightUserId, mode = 'overall' }) {
   const [rows, setRows] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
-    getDailyLeaderboard(quizDate).then(({ data, error: err }) => {
+    getDailyLeaderboard(quizDate, mode).then(({ data, error: err }) => {
       if (cancelled) return;
       if (err) setError(err.message);
       else setRows(data ?? []);
     });
     return () => { cancelled = true; };
-  }, [quizDate]);
+  }, [quizDate, mode]);
 
   if (error) return <p className="auth-error">{error}</p>;
   if (!rows) return <p className="sub">Loading leaderboard…</p>;

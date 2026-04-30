@@ -7,6 +7,7 @@ import CollegeLeaderboard from './CollegeLeaderboard';
 
 const TABS = [
   { key: 'daily', label: 'Daily' },
+  { key: 'last-night', label: 'Last Night' },
   { key: 'group', label: 'Group' },
   { key: 'college', label: 'College' },
 ];
@@ -54,6 +55,10 @@ export default function LeaderboardScreen({ userId, onBack }) {
 
       {tab === 'daily' && (
         <DailyLeaderboard quizDate={todayDateString()} highlightUserId={userId} />
+      )}
+
+      {tab === 'last-night' && (
+        <DailyLeaderboard quizDate={todayDateString()} highlightUserId={userId} mode="last_night" />
       )}
 
       {tab === 'group' && (

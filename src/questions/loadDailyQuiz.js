@@ -116,6 +116,6 @@ export async function loadDailyQuiz(dateStr) {
     } catch { /* optional */ }
   }
 
-  const questions = selectByMix(pool, { easy: 3, medium: 3, hard: 3 }, rand);
+  const questions = selectByMix(pool, { easy: 4, medium: 3, hard: 3 }, rand);
   return { questions };
 }

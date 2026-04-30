@@ -45,3 +45,8 @@ export async function getGameSummary(sport, league, eventId) {
   const data = await get(`${sport}/${league}/summary?event=${eventId}`);
   return data;
 }
+
+export async function getScoreboardForDate(sport, league, dateStr) {
+  const data = await get(`${sport}/${league}/scoreboard?dates=${dateStr}`);
+  return data.events ?? [];
+}

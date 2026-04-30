@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
-import { loadDailyQuiz } from '../questions/loadDailyQuiz';
+import { loadLastNightQuiz } from '../questions/loadLastNightQuiz';
 import { todayDateString } from '../questions/seededRandom';
 import { getMyDailyScore, submitDailyScore } from '../api/supabase';
 import QuizRunner from './QuizRunner';
 import DailyLeaderboard from './DailyLeaderboard';
 
 const TIMER_SECONDS = 10;
+const MODE = 'last_night';
 
-export default function DailyTrivia({ userId, onBack }) {
+export default function LastNight({ userId, onBack }) {
   const quizDate = todayDateString();
   const [phase, setPhase] = useState('loading');
   const [myScore, setMyScore] = useState(null);
@@ -16,7 +17,7 @@ export default function DailyTrivia({ userId, onBack }) {
 
   useEffect(() => {
     let cancelled = false;
-    getMyDailyScore(userId, quizDate).then(({ data, error: err }) => {
+    getMyDailyScore(userId, quizDate, MODE).then(({ data, error: err }) => {
       if (cancelled) return;
       if (err) {
         setError(err.message);
@@ -37,9 +38,9 @@ export default function DailyTrivia({ userId, onBack }) {
     setPhase('loading-quiz');
     setError(null);
     try {
-      const loaded = await loadDailyQuiz(quizDate);
-      if (loaded.questions.length === 0) {
-        throw new Error('Could not build today\'s quiz.');
+      const loaded = await loadLastNightQuiz();
+      if (loaded.questions.length < 5) {
+        throw new Error('Not enough action last night to build a full quiz. Come back tomorrow.');
       }
       setQuiz(loaded);
       setPhase('playing');
@@ -50,7 +51,7 @@ export default function DailyTrivia({ userId, onBack }) {
   }
 
   function handleQuizDone(score, total, durationMs) {
-    submitDailyScore({ userId, quizDate, score, total, durationMs }).then(({ error: err }) => {
+    submitDailyScore({ userId, quizDate, score, total, durationMs, mode: MODE }).then(({ error: err }) => {
       if (err) setError(err.message);
       setMyScore({ score, total, duration_ms: durationMs });
       setPhase('done');
@@ -61,7 +62,7 @@ export default function DailyTrivia({ userId, onBack }) {
     return (
       <div className="daily">
         <button className="back-btn" onClick={onBack}>← Home</button>
-        <div className="loader">{phase === 'loading-quiz' ? 'Building today\'s quiz…' : 'Loading…'}</div>
+        <div className="loader">{phase === 'loading-quiz' ? 'Pulling last night\'s box scores…' : 'Loading…'}</div>
       </div>
     );
   }
@@ -79,27 +80,27 @@ export default function DailyTrivia({ userId, onBack }) {
   return (
     <div className="daily">
       <button className="back-btn" onClick={onBack}>← Home</button>
-      <h1>Daily Trivia</h1>
+      <h1>Last Night</h1>
       <p className="sub">{quizDate}</p>
 
       {phase === 'done' && myScore && (
         <div className="daily-result">
           <p className="daily-result-label">You played today</p>
           <p className="daily-result-score">{myScore.score}/{myScore.total ?? 10}</p>
-          <p className="daily-result-note">Come back tomorrow for a new quiz.</p>
+          <p className="daily-result-note">Come back tomorrow with fresh box scores.</p>
         </div>
       )}
 
       {phase === 'entry' && (
         <div className="daily-entry">
-          <p className="sub">10 questions · 10 seconds each · one shot</p>
+          <p className="sub">Questions about last night's NBA, NHL, and MLB games. 10 seconds each. One shot.</p>
           <button className="btn-primary" onClick={startQuiz}>Play</button>
         </div>
       )}
 
       {error && <p className="auth-error">{error}</p>}
 
-      <DailyLeaderboard quizDate={quizDate} highlightUserId={userId} />
+      <DailyLeaderboard quizDate={quizDate} highlightUserId={userId} mode={MODE} />
     </div>
   );
 }
