@@ -42,6 +42,28 @@ function isEliteSoccerPlayer(name) {
   return ELITE_SOCCER_NAMES.some((elite) => n === elite || n.includes(elite));
 }
 
+function topByStat(players, statKey, fraction = 1 / 3) {
+  const withStat = players.filter((p) => p[statKey] != null);
+  if (withStat.length < 4) return withStat.length > 0 ? withStat : players;
+  const sorted = [...withStat].sort((a, b) => (b[statKey] ?? 0) - (a[statKey] ?? 0));
+  const cutoff = Math.max(3, Math.ceil(sorted.length * fraction));
+  return sorted.slice(0, cutoff);
+}
+
+function wellKnownPlayers(team, players) {
+  if (team.league === 'NBA') return topByStat(players, 'ppg');
+  if (team.league === 'NHL') return topByStat(players, 'seasonPoints');
+  if (team.league === 'MLB') return topByStat(players, 'hits');
+  return players;
+}
+
+function sameLeagueAs(team, candidate) {
+  if (!candidate.team) return false;
+  if (candidate.team.league !== team.league) return false;
+  if (team.league === 'Soccer') return candidate.team.competition === team.competition;
+  return true;
+}
+
 const DAILY_TEAM_COUNT = 8;
 
 function seededShuffle(arr, rand) {
@@ -66,16 +88,22 @@ export async function loadDailyQuiz(dateStr) {
     featured.map((t) => loadTeamData(t).catch(() => null)),
   );
   const featuredData = settled.filter(Boolean);
-  const allPlayers = featuredData.flatMap((d) => d.players);
 
-  const pool = featuredData.flatMap(({ team, players }) => {
-    let subjectPlayers = players;
+  const wellKnownPerTeam = featuredData.map(({ team, players }) => {
+    let subjectPlayers;
     if (team.league === 'Soccer') {
       subjectPlayers = players.filter((p) => isEliteSoccerPlayer(p.name));
-      if (subjectPlayers.length === 0) return [];
+    } else {
+      subjectPlayers = wellKnownPlayers(team, players);
     }
-    const otherPlayers = allPlayers.filter(
-      (p) => !subjectPlayers.some((fp) => fp.id === p.id),
+    return { team, subjectPlayers };
+  });
+  const wellKnownAll = wellKnownPerTeam.flatMap((d) => d.subjectPlayers);
+
+  const pool = wellKnownPerTeam.flatMap(({ team, subjectPlayers }) => {
+    if (subjectPlayers.length === 0) return [];
+    const otherPlayers = wellKnownAll.filter(
+      (p) => p && !subjectPlayers.some((fp) => fp.id === p.id) && sameLeagueAs(team, p),
     );
     return buildQuestionPool({ team, players: subjectPlayers, otherPlayers }, rand);
   });

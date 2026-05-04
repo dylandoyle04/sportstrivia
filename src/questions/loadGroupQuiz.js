@@ -19,6 +19,13 @@ function hashString(s) {
   return h >>> 0;
 }
 
+function sameLeagueAs(team, candidate) {
+  if (!candidate.team) return false;
+  if (candidate.team.league !== team.league) return false;
+  if (team.league === 'Soccer') return candidate.team.competition === team.competition;
+  return true;
+}
+
 export async function loadGroupQuiz({ groupId, teams, dateStr }) {
   const seed = dateSeed(dateStr) ^ hashString(groupId);
   const rand = createRng(seed);
@@ -31,7 +38,7 @@ export async function loadGroupQuiz({ groupId, teams, dateStr }) {
 
   const pool = featuredData.flatMap(({ team, players }) => {
     const otherPlayers = allPlayers.filter(
-      (p) => !players.some((fp) => fp.id === p.id),
+      (p) => !players.some((fp) => fp.id === p.id) && sameLeagueAs(team, p),
     );
     return buildQuestionPool({ team, players, otherPlayers }, rand);
   });
