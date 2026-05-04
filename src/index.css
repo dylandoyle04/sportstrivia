@@ -1,15 +1,15 @@
 :root {
   color-scheme: dark;
-  --bg: #050208;
-  --bg-panel: #1a0c33;
-  --bg-panel-alt: #2c1456;
-  --ink: #d6b56e;
-  --ink-dim: #8a7240;
-  --accent: #c9a227;
-  --accent-green: #5dffae;
-  --accent-red: #ff4d9d;
-  --accent-blue: #8b5cf6;
-  --border: #c9a227;
+  --bg: #0d0503;
+  --bg-panel: #2b0d05;
+  --bg-panel-alt: #4a1409;
+  --ink: #ffe4b5;
+  --ink-dim: #d4896e;
+  --accent: #ff4e1a;
+  --accent-green: #a8c850;
+  --accent-red: #ff2d1f;
+  --accent-blue: #ffb347;
+  --border: #ffe4b5;
   --shadow: #000;
 
   font-family: 'VT323', 'Courier New', monospace;
@@ -55,7 +55,7 @@ body::after {
     180deg,
     transparent 0%,
     transparent 47%,
-    rgba(255, 215, 0, 0.06) 50%,
+    rgba(255, 78, 26, 0.06) 50%,
     transparent 53%,
     transparent 100%
   );
@@ -82,9 +82,9 @@ h1, h2, h3, h4 {
   letter-spacing: 0;
   text-shadow:
     3px 3px 0 var(--shadow),
-    0 0 6px rgba(255, 215, 0, 0.95),
-    0 0 14px rgba(255, 215, 0, 0.7),
-    0 0 28px rgba(168, 85, 247, 0.55);
+    0 0 6px rgba(255, 78, 26, 0.95),
+    0 0 14px rgba(255, 78, 26, 0.7),
+    0 0 28px rgba(255, 140, 66, 0.4);
 }
 
 h1 {

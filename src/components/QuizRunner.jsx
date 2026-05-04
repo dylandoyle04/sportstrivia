@@ -40,6 +40,8 @@ export default function QuizRunner({
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState(null);
   const [bonusFlash, setBonusFlash] = useState(null);
+  const [streak, setStreak] = useState(0);
+  const [burstKey, setBurstKey] = useState(0);
   const startedAt = useRef(Date.now());
   const scoreRef = useRef(0);
   const indexRef = useRef(0);
@@ -72,6 +74,16 @@ export default function QuizRunner({
     const correct = choiceIndex === questions[index].correctIndex;
     const nextScore = correct ? score + 1 : score;
     if (correct) setScore(nextScore);
+
+    if (correct) {
+      setStreak((s) => {
+        const next = s + 1;
+        if (next >= 3) setBurstKey((k) => k + 1);
+        return next;
+      });
+    } else {
+      setStreak(0);
+    }
 
     if (isSession && (correctBonus || wrongPenalty)) {
       const delta = correct ? correctBonus : -wrongPenalty;
@@ -138,8 +150,16 @@ export default function QuizRunner({
           );
         })}
       </div>
+      {streak >= 2 && (
+        <div className="streak-indicator">🔥 {streak}</div>
+      )}
+      {streak >= 3 && (
+        <div key={burstKey} className="streak-burst" aria-hidden="true">
+          {streak} IN A ROW!
+        </div>
+      )}
       {selected !== null && (
-        <div className="verdict-overlay">
+        <div className={`verdict-overlay${selected !== q.correctIndex ? ' verdict-overlay--wrong' : ''}`}>
           <h2 className={`verdict-text verdict-${selected === q.correctIndex ? 'correct' : 'wrong'}`}>
             {selected === q.correctIndex ? 'CORRECT' : 'NOPE'}
           </h2>

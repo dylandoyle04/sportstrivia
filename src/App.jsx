@@ -14,6 +14,7 @@ import GroupDetail from './components/GroupDetail';
 import CollegeMode from './components/CollegeMode';
 import LeagueMode from './components/LeagueMode';
 import LeaderboardScreen from './components/LeaderboardScreen';
+import SynthwaveBg from './components/SynthwaveBg';
 import { supabase, upsertProfile } from './api/supabase';
 import './App.css';
 
@@ -126,26 +127,36 @@ export default function App() {
   }
 
   if (authStatus === 'loading') {
-    return <main className="app"><div className="loader">Loading…</div></main>;
+    return (
+      <>
+        <SynthwaveBg />
+        <main className="app"><div className="loader">Loading…</div></main>
+      </>
+    );
   }
 
   if (authStatus === 'anon') {
     return (
-      <main className="app">
-        {!pending && <SignIn onCodeSent={setPending} />}
-        {pending && (
-          <VerifyCode
-            email={pending.email}
-            onBack={() => setPending(null)}
-          />
-        )}
-      </main>
+      <>
+        <SynthwaveBg />
+        <main className="app">
+          {!pending && <SignIn onCodeSent={setPending} />}
+          {pending && (
+            <VerifyCode
+              email={pending.email}
+              onBack={() => setPending(null)}
+            />
+          )}
+        </main>
+      </>
     );
   }
 
   const displayName = session?.user?.user_metadata?.display_name ?? session?.user?.email ?? '';
 
   return (
+    <>
+    <SynthwaveBg />
     <main className="app">
       <header className="app-header">
         {screen !== 'home' && (
@@ -213,5 +224,6 @@ export default function App() {
         />
       )}
     </main>
+    </>
   );
 }
