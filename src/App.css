@@ -143,8 +143,9 @@
 
 .marquee-track {
   display: flex;
-  width: max-content;
-  animation: marqueeScroll 30s linear infinite;
+  width: fit-content;
+  animation: marqueeScroll 22s linear infinite;
+  will-change: transform;
 }
 
 .marquee-text {
@@ -155,13 +156,13 @@
     2px 2px 0 var(--shadow),
     0 0 10px rgba(255, 78, 26, 0.7);
   white-space: nowrap;
-  padding-right: 2rem;
   letter-spacing: 0.04em;
+  flex-shrink: 0;
 }
 
 @keyframes marqueeScroll {
-  from { transform: translateX(-50%); }
-  to   { transform: translateX(0); }
+  from { transform: translate3d(-50%, 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
 }
 
 .mode-card {

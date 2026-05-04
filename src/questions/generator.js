@@ -1,4 +1,5 @@
 import { TEAMS } from '../teams';
+import { topPercentilePlayers } from './wellKnown';
 
 const NBA_TEAM_NAMES = [...new Set(TEAMS.filter((t) => t.league === 'NBA').map((t) => t.name))];
 const NHL_TEAM_NAMES = [...new Set(TEAMS.filter((t) => t.league === 'NHL').map((t) => t.name))];
@@ -127,8 +128,10 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
   const allPlayers = [...players, ...otherPlayers];
   const pool = [];
 
+  // Position questions (easy) — only ask about top 30% players so they're well-known
+  const positionSubjects = topPercentilePlayers(team, players, 0.3);
   pool.push(...buildFieldQuestion({
-    players, allPlayers, field: 'position',
+    players: positionSubjects, allPlayers, field: 'position',
     promptFor: (p) => `What position does ${p.name} play?`,
     count: 5, difficulty: 'easy',
   }, rand));

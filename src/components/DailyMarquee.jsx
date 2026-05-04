@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { getDailyLeaderboard } from '../api/supabase';
 import { todayDateString } from '../questions/seededRandom';
 
+const SEPARATOR = '  •  ';
+
 export default function DailyMarquee() {
   const [leaderName, setLeaderName] = useState(null);
 
@@ -17,10 +19,10 @@ export default function DailyMarquee() {
   }, []);
 
   const phrase = leaderName
-    ? `DO YOU KNOW BALL?     TODAY'S TOP BALL KNOWER - ${leaderName.toUpperCase()}     `
-    : 'DO YOU KNOW BALL?     ';
+    ? `DO YOU KNOW BALL?${SEPARATOR}TODAY'S TOP BALL KNOWER - ${leaderName.toUpperCase()} (LEADER IN ACCURACY OF DAILY TRIVIA)${SEPARATOR}`
+    : `DO YOU KNOW BALL?${SEPARATOR}`;
 
-  const looped = phrase.repeat(3);
+  const looped = phrase.repeat(6);
 
   return (
     <div className="marquee" aria-label={phrase}>
