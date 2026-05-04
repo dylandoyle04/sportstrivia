@@ -1,6 +1,13 @@
 import * as espn from './espn';
 import { getBalldontliePlayers } from './balldontlie';
 import { getMlbRosterWithStats } from './mlb';
+import {
+  enrichNbaSeasonHighs,
+  enrichNhlSeasonHighs,
+  enrichNflSeasonHighs,
+  enrichMlbSeasonHighs,
+} from './seasonHighs';
+import { elitePlayers } from '../questions/wellKnown';
 
 const LEAGUE_PATHS = {
   NFL: { sport: 'football', league: 'nfl' },
@@ -61,6 +68,18 @@ function normalizePlayer(athlete) {
     receivingYards: null,
     receivingTds: null,
     receptions: null,
+    seasonHighPts: null,
+    seasonHighPoints: null,
+    seasonHighPassingYards: null,
+    seasonHighRushingYards: null,
+    seasonHighReceivingYards: null,
+    seasonHighHits: null,
+    lastSeasonHighPts: null,
+    lastSeasonHighPoints: null,
+    lastSeasonHighPassingYards: null,
+    lastSeasonHighRushingYards: null,
+    lastSeasonHighReceivingYards: null,
+    lastSeasonHighHits: null,
   };
 }
 
@@ -460,9 +479,9 @@ async function enrichSoccerWithLastGame(team, players, path) {
   }
 }
 
-async function enrichNbaWithLastGame(team, players, path) {
+async function enrichNbaWithLastGame(pickedTeam, teamMeta, players, path) {
   try {
-    const schedule = await espn.getTeamSchedule(path.sport, path.league, team.id);
+    const schedule = await espn.getTeamSchedule(path.sport, path.league, pickedTeam.id);
     const completed = (schedule ?? [])
       .filter((e) => e.competitions?.[0]?.status?.type?.completed)
       .sort((a, b) => new Date(b.date ?? 0) - new Date(a.date ?? 0));
@@ -471,7 +490,10 @@ async function enrichNbaWithLastGame(team, players, path) {
 
     const summary = await espn.getGameSummary(path.sport, path.league, lastGame.id);
     const teamBlock = (summary?.boxscore?.players ?? []).find(
-      (tb) => String(tb.team?.id) === String(team.id),
+      (tb) => String(tb.team?.id) === String(pickedTeam.id),
+    );
+    const oppBlock = (summary?.boxscore?.players ?? []).find(
+      (tb) => String(tb.team?.id) !== String(pickedTeam.id),
     );
     if (!teamBlock) return;
     const group = teamBlock.statistics?.[0];
@@ -482,7 +504,7 @@ async function enrichNbaWithLastGame(team, players, path) {
     if (ptsIdx < 0) return;
 
     const opponent = lastGame.competitions?.[0]?.competitors?.find(
-      (c) => String(c.team?.id) !== String(team.id),
+      (c) => String(c.team?.id) !== String(pickedTeam.id),
     )?.team?.displayName ?? 'opponent';
 
     const ptsByAthleteId = new Map();
@@ -497,6 +519,31 @@ async function enrichNbaWithLastGame(team, players, path) {
       if (pts != null) {
         player.lastGamePts = pts;
         player.lastGameOpponent = opponent;
+      }
+    }
+
+    // Top opposing scorer (for "who scored most against [Team]" question)
+    if (oppBlock) {
+      const oppGroup = oppBlock.statistics?.[0];
+      const oppPtsIdx = (oppGroup?.labels ?? []).indexOf('PTS');
+      if (oppGroup && oppPtsIdx >= 0) {
+        let topOpp = null;
+        const candidates = [];
+        for (const entry of oppGroup.athletes ?? []) {
+          const name = entry.athlete?.displayName;
+          const pts = parseInt(entry.stats?.[oppPtsIdx] ?? '', 10);
+          if (name && Number.isFinite(pts)) candidates.push({ name, pts });
+        }
+        candidates.sort((a, b) => b.pts - a.pts);
+        if (candidates.length >= 4 && candidates[0].pts > candidates[1].pts) {
+          teamMeta.oppLastGameTopScorer = {
+            name: candidates[0].name,
+            pts: candidates[0].pts,
+            distractors: candidates.slice(1, 6).map((c) => c.name),
+            opponentTeamName: oppBlock.team?.displayName ?? 'opponent',
+            statLabel: 'points',
+          };
+        }
       }
     }
   } catch {
@@ -516,10 +563,12 @@ export async function loadTeamData(pickedTeam) {
     .filter((p) => p.name)
     .map((p) => ({ ...p, team: pickedTeam }));
 
+  const teamMeta = normalizeTeam(teamInfo, pickedTeam);
+
   if (pickedTeam.league === 'NBA') {
     const nbaTasks = [
       enrichNbaWithAthleteStats(players, path),
-      enrichNbaWithLastGame(pickedTeam, players, path),
+      enrichNbaWithLastGame(pickedTeam, teamMeta, players, path),
     ];
     if (pickedTeam.bdlId) {
       nbaTasks.push(enrichNbaFromBalldontlie(players, pickedTeam.bdlId));
@@ -546,8 +595,20 @@ export async function loadTeamData(pickedTeam) {
     await enrichNflWithAthleteStats(players, path);
   }
 
+  // Season-high enrichment for top 20% of each team's roster (used in
+  // "What is [player]'s high in [stat] in a single game this season?" Qs)
+  try {
+    const elite = elitePlayers(pickedTeam, players);
+    if (elite.length > 0) {
+      if (pickedTeam.league === 'NBA') await enrichNbaSeasonHighs(elite);
+      else if (pickedTeam.league === 'NHL') await enrichNhlSeasonHighs(elite);
+      else if (pickedTeam.league === 'NFL') await enrichNflSeasonHighs(elite);
+      else if (pickedTeam.league === 'MLB') await enrichMlbSeasonHighs(elite);
+    }
+  } catch { /* optional */ }
+
   return {
-    team: normalizeTeam(teamInfo, pickedTeam),
+    team: teamMeta,
     players,
   };
 }

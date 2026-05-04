@@ -12,6 +12,12 @@ import { createRng, dateSeed } from './seededRandom';
 import { getNbaStandings, getNhlStandings, getSoccerStandings } from '../api/standings';
 import { getMlbLeaders } from '../api/mlb';
 import { selectSubjects, sameLeagueAs } from './wellKnown';
+import {
+  nflLeaderQuestions,
+  nbaLeaderQuestions,
+  nhlLeaderQuestions,
+  mlbLastSeasonLeaderQuestions,
+} from './leagueLeaders';
 
 const DAILY_TEAM_COUNT = 8;
 
@@ -86,6 +92,17 @@ export async function loadDailyQuiz(dateStr) {
       ]);
       pool.push(...buildMlbLeaderQuestions({ homeRuns: hr, battingAverage: ba, era, hits }, rand));
     } catch { /* optional */ }
+    pool.push(...await mlbLastSeasonLeaderQuestions(rand));
+  }
+
+  if (featured.some((t) => t.league === 'NFL')) {
+    pool.push(...await nflLeaderQuestions(rand));
+  }
+  if (featured.some((t) => t.league === 'NBA')) {
+    pool.push(...await nbaLeaderQuestions(rand));
+  }
+  if (featured.some((t) => t.league === 'NHL')) {
+    pool.push(...await nhlLeaderQuestions(rand));
   }
 
   const questions = selectByMix(pool, { easy: 4, medium: 3, hard: 3 }, rand);

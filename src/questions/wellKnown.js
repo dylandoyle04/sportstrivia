@@ -36,22 +36,30 @@ function topByStat(players, statKey, fraction = 1 / 3) {
   return sorted.slice(0, cutoff);
 }
 
-export function wellKnownPlayers(team, players) {
-  if (team.league === 'NBA') return topByStat(players, 'ppg');
-  if (team.league === 'NHL') return topByStat(players, 'seasonPoints');
-  if (team.league === 'MLB') return topByStat(players, 'hits');
+export function topPercentilePlayers(team, players, fraction = 1 / 3) {
+  if (team.league === 'NBA') return topByStat(players, 'ppg', fraction);
+  if (team.league === 'NHL') return topByStat(players, 'seasonPoints', fraction);
+  if (team.league === 'MLB') return topByStat(players, 'hits', fraction);
   if (team.league === 'NFL') {
-    const withFame = players.map((p) => ({
-      ...p,
-      _nflFame: (p.passingTds ?? 0)
+    const withFame = players.map((p) => {
+      p._nflFame = (p.passingTds ?? 0)
         + (p.rushingYards ?? 0) / 100
         + (p.receivingYards ?? 0) / 100
         + (p.rushingTds ?? 0) * 2
-        + (p.receivingTds ?? 0) * 2,
-    }));
-    return topByStat(withFame, '_nflFame');
+        + (p.receivingTds ?? 0) * 2;
+      return p;
+    });
+    return topByStat(withFame, '_nflFame', fraction);
   }
   return players;
+}
+
+export function wellKnownPlayers(team, players) {
+  return topPercentilePlayers(team, players, 1 / 3);
+}
+
+export function elitePlayers(team, players) {
+  return topPercentilePlayers(team, players, 1 / 5);
 }
 
 export function selectSubjects(team, players) {

@@ -11,12 +11,12 @@ export async function getMlbRosterWithStats(mlbTeamId) {
   return res.json();
 }
 
-export async function getMlbLeaders(category, statGroup, limit = 10) {
-  const season = currentMlbSeason();
+export async function getMlbLeaders(category, statGroup, limit = 10, season = null) {
+  const yr = season ?? currentMlbSeason();
   const params = new URLSearchParams({
     leaderCategories: category,
     statGroup,
-    season: String(season),
+    season: String(yr),
     limit: String(limit),
   });
   const res = await fetch(`/api/mlb/api/v1/stats/leaders?${params.toString()}`);

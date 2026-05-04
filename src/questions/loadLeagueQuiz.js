@@ -11,6 +11,12 @@ import {
 import { getNbaStandings, getNhlStandings, getSoccerStandings } from '../api/standings';
 import { getMlbLeaders } from '../api/mlb';
 import { selectSubjects, sameLeagueAs } from './wellKnown';
+import {
+  nflLeaderQuestions,
+  nbaLeaderQuestions,
+  nhlLeaderQuestions,
+  mlbLastSeasonLeaderQuestions,
+} from './leagueLeaders';
 
 const TEAM_COUNT = 8;
 
@@ -85,6 +91,17 @@ export async function loadLeagueQuiz({ league, competition }) {
       ]);
       pool.push(...buildMlbLeaderQuestions({ homeRuns: hr, battingAverage: ba, era, hits }));
     } catch { /* optional */ }
+    pool.push(...await mlbLastSeasonLeaderQuestions());
+  }
+
+  if (league === 'NFL') {
+    pool.push(...await nflLeaderQuestions());
+  }
+  if (league === 'NBA') {
+    pool.push(...await nbaLeaderQuestions());
+  }
+  if (league === 'NHL') {
+    pool.push(...await nhlLeaderQuestions());
   }
 
   const questions = selectByMix(pool, { easy: 3, medium: 4, hard: 3 });

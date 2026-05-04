@@ -39,6 +39,19 @@ function uniqueValues(players, key, excludeValue) {
   )];
 }
 
+function numericDistractors(correct, count, granularity, rand, range = [0.55, 1.45]) {
+  const candidates = new Set();
+  let attempts = 0;
+  while (candidates.size < count && attempts < 100) {
+    const factor = range[0] + rand() * (range[1] - range[0]);
+    let v = Math.round((correct * factor) / granularity) * granularity;
+    if (v <= 0) v = granularity;
+    if (v !== correct) candidates.add(v);
+    attempts += 1;
+  }
+  return shuffle([...candidates], rand).slice(0, count);
+}
+
 function parseHeightInches(heightStr) {
   if (heightStr == null) return null;
   const m = String(heightStr).match(/(\d+)['′]\s*(\d+)/);
@@ -189,15 +202,32 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
     pool.push(mcq(prompt, player.name, distractors.map((p) => p.name), player, 'hard', rand));
   }
 
-  // Stat head-to-head helper (2-choice, same-team opponents)
-  function buildStatHeadToHead(field, prompt, minGap, difficulty, count, direction = 'higher') {
+  // Stat head-to-head helper (2-choice, same-team opponents).
+  // opts: { direction: 'higher'|'lower', position: (player) => bool }
+  // Subjects + opponents filtered to top 50% of eligible by the stat.
+  function buildStatHeadToHead(field, prompt, minGap, difficulty, count, opts = {}) {
+    const direction = typeof opts === 'string' ? opts : (opts.direction ?? 'higher');
+    const positionPred = typeof opts === 'object' ? opts.position : null;
+    const maxGap = typeof opts === 'object' ? opts.maxGap : null;
+    const matchesPosition = (p) => (positionPred ? positionPred(p) : true);
+
+    const eligible = players.filter((p) => p[field] != null && matchesPosition(p));
+    if (eligible.length < 2) return [];
+    const sorted = [...eligible].sort((a, b) =>
+      direction === 'higher' ? (b[field] - a[field]) : (a[field] - b[field]),
+    );
+    const topHalf = sorted.slice(0, Math.max(2, Math.ceil(sorted.length / 2)));
+
     const seen = new Set();
     const out = [];
-    const subjects = players.filter((p) => p[field] != null);
-    for (const player of pickN(subjects, count ?? 2, rand)) {
-      const opponents = players.filter(
-        (o) => o.name !== player.name && o[field] != null && Math.abs(o[field] - player[field]) > minGap,
-      );
+    for (const player of pickN(topHalf, count ?? 2, rand)) {
+      const opponents = topHalf.filter((o) => {
+        if (o.name === player.name) return false;
+        const gap = Math.abs(o[field] - player[field]);
+        if (gap <= minGap) return false;
+        if (maxGap != null && gap > maxGap) return false;
+        return true;
+      });
       if (opponents.length === 0) continue;
       const opp = pickN(opponents, 1, rand)[0];
       const [winner, loser] = direction === 'higher'
@@ -211,26 +241,33 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
     return out;
   }
 
-  pool.push(...buildStatHeadToHead('ppg', 'Who averages more points per game this season?', 0.5, 'easy', 4));
-  pool.push(...buildStatHeadToHead('apg', 'Who averages more assists per game this season?', 0.3, 'hard', 4));
-  pool.push(...buildStatHeadToHead('rpg', 'Who averages more rebounds per game this season?', 0.3, 'hard', 4));
+  pool.push(...buildStatHeadToHead('ppg', 'Who averages more points per game this season?', 0.3, 'easy', 4, { maxGap: 4 }));
+  pool.push(...buildStatHeadToHead('apg', 'Who averages more assists per game this season?', 0.2, 'hard', 4, { maxGap: 2.5 }));
+  pool.push(...buildStatHeadToHead('rpg', 'Who averages more rebounds per game this season?', 0.2, 'hard', 4, { maxGap: 3 }));
 
-  pool.push(...buildStatHeadToHead('homeRuns', 'Who has more home runs this season?', 1, 'medium', 4));
-  pool.push(...buildStatHeadToHead('hits', 'Who has more hits this season?', 5, 'medium', 4));
-  pool.push(...buildStatHeadToHead('battingAvg', 'Who has the higher batting average this season?', 0.020, 'hard', 3));
-  pool.push(...buildStatHeadToHead('era', 'Whose ERA is lower this season?', 0.3, 'medium', 4, 'lower'));
+  const isPitcher = (p) => ['P', 'SP', 'RP'].includes(p.positionAbbr);
+  const isHitter = (p) => !isPitcher(p);
+  const isSkater = (p) => p.positionAbbr !== 'G';
+  const isQb = (p) => p.positionAbbr === 'QB';
+  const isRusher = (p) => ['QB', 'RB'].includes(p.positionAbbr);
+  const isReceiver = (p) => ['WR', 'TE', 'RB'].includes(p.positionAbbr);
 
-  pool.push(...buildStatHeadToHead('seasonGoals', 'Who has more goals this season?', 2, 'medium', 4));
-  pool.push(...buildStatHeadToHead('seasonAssists', 'Who has more assists this season?', 2, 'medium', 4));
-  pool.push(...buildStatHeadToHead('seasonPoints', 'Who has more points this season?', 3, 'medium', 4));
+  pool.push(...buildStatHeadToHead('homeRuns', 'Who has more home runs this season?', 1, 'medium', 4, { position: isHitter, maxGap: 8 }));
+  pool.push(...buildStatHeadToHead('hits', 'Who has more hits this season?', 3, 'medium', 4, { position: isHitter, maxGap: 18 }));
+  pool.push(...buildStatHeadToHead('battingAvg', 'Who has the higher batting average this season?', 0.012, 'hard', 3, { position: isHitter, maxGap: 0.040 }));
+  pool.push(...buildStatHeadToHead('era', 'Whose ERA is lower this season?', 0.2, 'medium', 4, { direction: 'lower', position: isPitcher, maxGap: 0.9 }));
 
-  pool.push(...buildStatHeadToHead('passingYards', 'Who has more passing yards this season?', 200, 'medium', 2));
-  pool.push(...buildStatHeadToHead('passingTds', 'Who has more passing touchdowns this season?', 2, 'medium', 2));
-  pool.push(...buildStatHeadToHead('rushingYards', 'Who has more rushing yards this season?', 80, 'medium', 3));
-  pool.push(...buildStatHeadToHead('rushingTds', 'Who has more rushing touchdowns this season?', 1, 'hard', 2));
-  pool.push(...buildStatHeadToHead('receivingYards', 'Who has more receiving yards this season?', 80, 'medium', 3));
-  pool.push(...buildStatHeadToHead('receivingTds', 'Who has more receiving touchdowns this season?', 1, 'hard', 3));
-  pool.push(...buildStatHeadToHead('receptions', 'Who has more receptions this season?', 5, 'medium', 3));
+  pool.push(...buildStatHeadToHead('seasonGoals', 'Who has more goals this season?', 1, 'medium', 4, { position: isSkater, maxGap: 8 }));
+  pool.push(...buildStatHeadToHead('seasonAssists', 'Who has more assists this season?', 2, 'medium', 4, { position: isSkater, maxGap: 12 }));
+  pool.push(...buildStatHeadToHead('seasonPoints', 'Who has more points this season?', 2, 'medium', 4, { position: isSkater, maxGap: 15 }));
+
+  pool.push(...buildStatHeadToHead('passingYards', 'Who has more passing yards this season?', 100, 'medium', 2, { position: isQb, maxGap: 800 }));
+  pool.push(...buildStatHeadToHead('passingTds', 'Who has more passing touchdowns this season?', 1, 'medium', 2, { position: isQb, maxGap: 6 }));
+  pool.push(...buildStatHeadToHead('rushingYards', 'Who has more rushing yards this season?', 50, 'medium', 3, { position: isRusher, maxGap: 350 }));
+  pool.push(...buildStatHeadToHead('rushingTds', 'Who has more rushing touchdowns this season?', 1, 'hard', 2, { position: isRusher, maxGap: 4 }));
+  pool.push(...buildStatHeadToHead('receivingYards', 'Who has more receiving yards this season?', 50, 'medium', 3, { position: isReceiver, maxGap: 350 }));
+  pool.push(...buildStatHeadToHead('receivingTds', 'Who has more receiving touchdowns this season?', 1, 'hard', 3, { position: isReceiver, maxGap: 5 }));
+  pool.push(...buildStatHeadToHead('receptions', 'Who has more receptions this season?', 2, 'medium', 3, { position: isReceiver, maxGap: 14 }));
 
   // NFL team leader questions (4-choice, same team)
   function nflTeamLeader(field, label, difficulty) {
@@ -258,15 +295,18 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
   // NFL stat-line "Who is this player?" — position-aware (hard)
   for (const player of pickN(players.filter((p) => p.team?.league === 'NFL' && p.name), 3, rand)) {
     let lines;
-    if (player.passingYards != null && player.passingTds != null) {
+    const isQb = player.positionAbbr === 'QB';
+    const isRb = player.positionAbbr === 'RB';
+    const isReceiver = player.positionAbbr === 'WR' || player.positionAbbr === 'TE';
+    if (isQb && (player.passingYards ?? 0) > 200) {
       lines = [
         `Passing yards: ${player.passingYards.toLocaleString()}`,
-        `Passing TDs: ${player.passingTds}`,
+        `Passing TDs: ${player.passingTds ?? 0}`,
       ];
       if (player.rushingYards != null && player.rushingYards >= 100) {
         lines.push(`Rushing yards: ${player.rushingYards.toLocaleString()}`);
       }
-    } else if (player.rushingYards != null && player.rushingYards > 0) {
+    } else if (isRb && (player.rushingYards ?? 0) > 100) {
       lines = [
         `Rushing yards: ${player.rushingYards.toLocaleString()}`,
         `Rushing TDs: ${player.rushingTds ?? 0}`,
@@ -274,7 +314,7 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
       if (player.receptions != null && player.receptions > 0) {
         lines.push(`Receptions: ${player.receptions}`);
       }
-    } else if (player.receivingYards != null && player.receivingYards > 0) {
+    } else if (isReceiver && (player.receivingYards ?? 0) > 100) {
       lines = [
         `Receptions: ${player.receptions ?? 0}`,
         `Receiving yards: ${player.receivingYards.toLocaleString()}`,
@@ -374,14 +414,70 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
     const key = [higher.name, lower.name].sort().join('|');
     if (seenH2H.has(key)) continue;
     seenH2H.add(key);
+    const orderedSubs = rand() < 0.5 ? [higher, lower] : [lower, higher];
+    const lines = orderedSubs.map((p) => {
+      const teamName = p.team?.name ?? '';
+      const opp = p.lastGameOpponent ?? '';
+      return `${p.name} (${teamName} vs ${opp})`;
+    });
     pool.push(mcq(
-      'Who scored more points in their most recent game?',
+      `Who scored more points in their most recent game?\n\n${lines.join('\n')}`,
       higher.name,
       [lower.name],
       higher,
       'hard',
       rand,
     ));
+  }
+
+  // Season-high single-game questions (top 20% players only — already filtered upstream by enrichment)
+  const seasonHighDefs = [
+    { field: 'seasonHighPts', granularity: 1, league: 'NBA', prompt: (p) => `What is ${p.name}'s high in points in a single game this season?` },
+    { field: 'lastSeasonHighPts', granularity: 1, league: 'NBA', prompt: (p) => `What was ${p.name}'s high in points in a single game last season?` },
+    { field: 'seasonHighPoints', granularity: 1, league: 'NHL', prompt: (p) => `What is ${p.name}'s high in points (goals + assists) in a single game this season?` },
+    { field: 'lastSeasonHighPoints', granularity: 1, league: 'NHL', prompt: (p) => `What was ${p.name}'s high in points (goals + assists) in a single game last season?` },
+    { field: 'seasonHighPassingYards', granularity: 5, league: 'NFL', prompt: (p) => `What is ${p.name}'s high in passing yards in a single game this season?` },
+    { field: 'lastSeasonHighPassingYards', granularity: 5, league: 'NFL', prompt: (p) => `What was ${p.name}'s high in passing yards in a single game last season?` },
+    { field: 'seasonHighRushingYards', granularity: 5, league: 'NFL', prompt: (p) => `What is ${p.name}'s high in rushing yards in a single game this season?` },
+    { field: 'lastSeasonHighRushingYards', granularity: 5, league: 'NFL', prompt: (p) => `What was ${p.name}'s high in rushing yards in a single game last season?` },
+    { field: 'seasonHighReceivingYards', granularity: 5, league: 'NFL', prompt: (p) => `What is ${p.name}'s high in receiving yards in a single game this season?` },
+    { field: 'lastSeasonHighReceivingYards', granularity: 5, league: 'NFL', prompt: (p) => `What was ${p.name}'s high in receiving yards in a single game last season?` },
+    { field: 'seasonHighHits', granularity: 1, league: 'MLB', prompt: (p) => `What is ${p.name}'s high in hits in a single game this season?` },
+    { field: 'lastSeasonHighHits', granularity: 1, league: 'MLB', prompt: (p) => `What was ${p.name}'s high in hits in a single game last season?` },
+  ];
+  for (const def of seasonHighDefs) {
+    const eligible = players.filter((p) =>
+      p[def.field] != null && p[def.field] > 0 && p.team?.league === def.league && p.name,
+    );
+    for (const player of pickN(eligible, 3, rand)) {
+      const correct = player[def.field];
+      const distractors = numericDistractors(correct, 3, def.granularity, rand);
+      if (distractors.length !== 3) continue;
+      pool.push(mcq(
+        def.prompt(player),
+        correct,
+        distractors,
+        player,
+        'hard',
+        rand,
+      ));
+    }
+  }
+
+  // "Who scored the most against [Team] in their last game?" (4-choice)
+  if (team.oppLastGameTopScorer) {
+    const top = team.oppLastGameTopScorer;
+    const distractors = top.distractors.slice(0, 3);
+    if (distractors.length === 3) {
+      pool.push(mcq(
+        `Who led the ${top.opponentTeamName} in ${top.statLabel} against the ${team.name} in their last game?`,
+        top.name,
+        distractors,
+        null,
+        'hard',
+        rand,
+      ));
+    }
   }
 
   // Stat-line "Who is this player?" — NBA averages
@@ -448,7 +544,7 @@ export function generateQuestions(data, options = {}) {
   return shuffle(pool, rand).slice(0, options.count ?? 10);
 }
 
-export function buildMlbLeaderQuestions(leadersByCategory, rand = Math.random) {
+export function buildMlbLeaderQuestions(leadersByCategory, rand = Math.random, suffix = ' this season') {
   const out = [];
   function add(leaders, prompt, difficulty) {
     if (!leaders || leaders.length < 4) return;
@@ -458,10 +554,18 @@ export function buildMlbLeaderQuestions(leadersByCategory, rand = Math.random) {
     if (distractors.length !== 3) return;
     out.push(mcq(prompt, top.name, distractors.map((d) => d.name), null, difficulty, rand));
   }
-  add(leadersByCategory.homeRuns, 'Who is leading MLB in home runs this season?', 'medium');
-  add(leadersByCategory.battingAverage, 'Who has the highest batting average in MLB this season?', 'hard');
-  add(leadersByCategory.era, 'Who has the lowest ERA in MLB this season?', 'hard');
-  add(leadersByCategory.hits, 'Who is leading MLB in hits this season?', 'medium');
+  if (suffix === ' this season') {
+    add(leadersByCategory.homeRuns, 'Who is leading MLB in home runs this season?', 'medium');
+    add(leadersByCategory.battingAverage, 'Who has the highest batting average in MLB this season?', 'hard');
+    add(leadersByCategory.era, 'Who has the lowest ERA in MLB this season?', 'hard');
+    add(leadersByCategory.hits, 'Who is leading MLB in hits this season?', 'medium');
+  } else {
+    const t = suffix.trim();
+    add(leadersByCategory.homeRuns, `Who led MLB in home runs${suffix}?`, 'medium');
+    add(leadersByCategory.battingAverage, `Who had the highest batting average in MLB${suffix}?`, 'hard');
+    add(leadersByCategory.era, `Who had the lowest ERA in MLB${suffix}?`, 'hard');
+    add(leadersByCategory.hits, `Who led MLB in hits${suffix}?`, 'medium');
+  }
   return out;
 }
 
@@ -695,6 +799,21 @@ export function buildLastNightQuestions(games, rand = Math.random) {
   }
 
   return shuffle(out, rand);
+}
+
+export function buildLeaderQuestions(leadersByCategory, prompts, rand = Math.random) {
+  const out = [];
+  for (const [cat, def] of Object.entries(prompts)) {
+    const leaders = leadersByCategory[cat];
+    if (!leaders || leaders.length < 4) continue;
+    const top = leaders[0];
+    const distractors = pickN(leaders.slice(1, 8), 3, rand);
+    if (distractors.length !== 3) continue;
+    const prompt = typeof def === 'string' ? def : def.prompt;
+    const difficulty = typeof def === 'string' ? 'medium' : (def.difficulty ?? 'medium');
+    out.push(mcq(prompt, top.name, distractors.map((d) => d.name), null, difficulty, rand));
+  }
+  return out;
 }
 
 export function buildSoccerTeamStatQuestions(standings, competition, rand = Math.random) {
