@@ -144,7 +144,7 @@
 .marquee-track {
   display: flex;
   width: fit-content;
-  animation: marqueeScroll 22s linear infinite;
+  animation: marqueeScroll 38s linear infinite;
   will-change: transform;
 }
 
@@ -161,8 +161,8 @@
 }
 
 @keyframes marqueeScroll {
-  from { transform: translate3d(-50%, 0, 0); }
-  to   { transform: translate3d(0, 0, 0); }
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
 }
 
 .mode-card {
