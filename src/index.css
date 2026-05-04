@@ -25,6 +25,11 @@ body {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   position: relative;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 /* Drifting CRT scanlines */

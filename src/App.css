@@ -74,6 +74,7 @@
   border: 3px solid var(--border);
   box-shadow: 4px 4px 0 var(--shadow);
   position: relative;
+  flex-wrap: wrap;
 }
 
 .app-header-name {
@@ -97,6 +98,33 @@
     0 0 8px rgba(255, 78, 26, 0.7);
   letter-spacing: 0;
   white-space: nowrap;
+}
+
+.app-header-name {
+  max-width: 50vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .app-header {
+    gap: 0.6rem;
+    padding: 0.6rem 0.75rem;
+  }
+  .app-header-title {
+    display: none;
+  }
+  .app-header-name {
+    font-size: 0.6rem;
+    max-width: 38vw;
+  }
+  .back-btn {
+    font-size: 0.6rem;
+  }
+  .marquee-text {
+    font-size: 0.85rem;
+  }
 }
 
 /* ---------- Home / mode hub ---------- */
