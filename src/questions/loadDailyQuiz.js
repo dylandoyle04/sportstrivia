@@ -2,7 +2,7 @@ import { loadTeamData } from '../api/league';
 import { TEAMS } from '../teams';
 import {
   buildQuestionPool,
-  selectByMix,
+  selectByMixUniqueTeams,
   buildNbaTeamStatQuestions,
   buildNhlTeamStatQuestions,
   buildSoccerTeamStatQuestions,
@@ -50,12 +50,30 @@ export async function loadDailyQuiz(dateStr) {
   }));
   const wellKnownAll = wellKnownPerTeam.flatMap((d) => d.subjectPlayers);
 
+  const teamCaps = { easy: 2, medium: 3, hard: 3 };
   const pool = wellKnownPerTeam.flatMap(({ team, subjectPlayers }) => {
     if (subjectPlayers.length === 0) return [];
     const otherPlayers = wellKnownAll.filter(
       (p) => p && !subjectPlayers.some((fp) => fp.id === p.id) && sameLeagueAs(team, p),
     );
-    return buildQuestionPool({ team, players: subjectPlayers, otherPlayers }, rand);
+    const all = buildQuestionPool({ team, players: subjectPlayers, otherPlayers }, rand);
+    const byDiff = { easy: [], medium: [], hard: [] };
+    for (const q of all) {
+      if (byDiff[q.difficulty]) byDiff[q.difficulty].push(q);
+    }
+    const seededShuffleLocal = (arr) => {
+      const c = [...arr];
+      for (let i = c.length - 1; i > 0; i--) {
+        const j = Math.floor(rand() * (i + 1));
+        [c[i], c[j]] = [c[j], c[i]];
+      }
+      return c;
+    };
+    return [
+      ...seededShuffleLocal(byDiff.easy).slice(0, teamCaps.easy),
+      ...seededShuffleLocal(byDiff.medium).slice(0, teamCaps.medium),
+      ...seededShuffleLocal(byDiff.hard).slice(0, teamCaps.hard),
+    ];
   });
 
   if (featured.some((t) => t.league === 'NBA')) {
@@ -72,15 +90,7 @@ export async function loadDailyQuiz(dateStr) {
     } catch { /* optional */ }
   }
 
-  const soccerCompetitions = [...new Set(
-    featured.filter((t) => t.league === 'Soccer').map((t) => t.competition),
-  )];
-  for (const comp of soccerCompetitions) {
-    try {
-      const standings = await getSoccerStandings(comp);
-      pool.push(...buildSoccerTeamStatQuestions(standings, comp, rand));
-    } catch { /* optional */ }
-  }
+  // Skip soccer team-stat questions in Daily — only the 10 elite player names are allowed.
 
   if (featured.some((t) => t.league === 'MLB')) {
     try {
@@ -105,6 +115,6 @@ export async function loadDailyQuiz(dateStr) {
     pool.push(...await nhlLeaderQuestions(rand));
   }
 
-  const questions = selectByMix(pool, { easy: 4, medium: 3, hard: 3 }, rand);
+  const questions = selectByMixUniqueTeams(pool, { easy: 4, medium: 3, hard: 3 }, rand);
   return { questions };
 }

@@ -124,6 +124,45 @@ export function selectByMix(pool, mix, rand = Math.random) {
   return shuffle(result, rand);
 }
 
+/**
+ * Like selectByMix but caps each team to at most one question across the
+ * entire returned set. Cross-league questions (no player.team) are unbounded.
+ */
+export function selectByMixUniqueTeams(pool, mix, rand = Math.random) {
+  const byDiff = {
+    easy: shuffle(pool.filter((q) => q.difficulty === 'easy'), rand),
+    medium: shuffle(pool.filter((q) => q.difficulty === 'medium'), rand),
+    hard: shuffle(pool.filter((q) => q.difficulty === 'hard'), rand),
+  };
+  const usedTeams = new Set();
+  const result = [];
+
+  for (const diff of ['easy', 'medium', 'hard']) {
+    const want = mix[diff] ?? 0;
+    const taken = [];
+    const skipped = [];
+    for (const q of byDiff[diff]) {
+      const key = q.player?.team?.name;
+      if (taken.length >= want) {
+        skipped.push(q);
+        continue;
+      }
+      if (key && usedTeams.has(key)) {
+        skipped.push(q);
+        continue;
+      }
+      taken.push(q);
+      if (key) usedTeams.add(key);
+    }
+    while (taken.length < want && skipped.length > 0) {
+      taken.push(skipped.shift());
+    }
+    result.push(...taken);
+  }
+
+  return shuffle(result, rand);
+}
+
 export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.random) {
   const allPlayers = [...players, ...otherPlayers];
   const pool = [];
@@ -480,7 +519,7 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
         `Who led the ${top.opponentTeamName} in ${top.statLabel} against the ${team.name} in their last game?`,
         top.name,
         distractors,
-        null,
+        { team: { name: team.name, league: team.league } },
         'hard',
         rand,
       ));
