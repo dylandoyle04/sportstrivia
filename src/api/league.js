@@ -54,7 +54,65 @@ function normalizePlayer(athlete) {
     seasonPoints: null,
     lastGameGoals: null,
     lastGameAssists: null,
+    passingYards: null,
+    passingTds: null,
+    rushingYards: null,
+    rushingTds: null,
+    receivingYards: null,
+    receivingTds: null,
+    receptions: null,
   };
+}
+
+function parseNflAthleteStats(data) {
+  const cats = data?.categories ?? [];
+  function getLatest(name) {
+    const cat = cats.find((c) => c.name === name);
+    if (!cat?.statistics?.length) return null;
+    const sorted = [...cat.statistics].sort(
+      (a, b) => (b.season?.year ?? 0) - (a.season?.year ?? 0),
+    );
+    return { row: sorted[0], labels: cat.labels ?? [] };
+  }
+  function val(parsed, label) {
+    if (!parsed) return null;
+    const idx = parsed.labels.indexOf(label);
+    if (idx < 0) return null;
+    const raw = (parsed.row.stats?.[idx] ?? '').replace(/,/g, '');
+    const v = parseFloat(raw);
+    return Number.isFinite(v) ? v : null;
+  }
+  const passing = getLatest('passing');
+  const rushing = getLatest('rushing');
+  const receiving = getLatest('receiving');
+  return {
+    passingYards: val(passing, 'YDS'),
+    passingTds: val(passing, 'TD'),
+    rushingYards: val(rushing, 'YDS'),
+    rushingTds: val(rushing, 'TD'),
+    receivingYards: val(receiving, 'YDS'),
+    receivingTds: val(receiving, 'TD'),
+    receptions: val(receiving, 'REC'),
+  };
+}
+
+const NFL_SKILL_POSITIONS = new Set(['QB', 'RB', 'WR', 'TE']);
+
+async function enrichNflWithAthleteStats(players, path) {
+  const skill = players.filter((p) => p.id && NFL_SKILL_POSITIONS.has(p.positionAbbr));
+  await Promise.all(
+    skill.map(async (player) => {
+      try {
+        const data = await espn.getAthleteStats(path.sport, path.league, player.id);
+        const parsed = parseNflAthleteStats(data);
+        for (const k of ['passingYards', 'passingTds', 'rushingYards', 'rushingTds', 'receivingYards', 'receivingTds', 'receptions']) {
+          if (parsed[k] != null) player[k] = parsed[k];
+        }
+      } catch {
+        /* optional */
+      }
+    }),
+  );
 }
 
 async function enrichMlbWithStats(players, mlbTeamId) {
@@ -482,6 +540,10 @@ export async function loadTeamData(pickedTeam) {
 
   if (pickedTeam.league === 'Soccer') {
     await enrichSoccerWithLastGame(pickedTeam, players, path);
+  }
+
+  if (pickedTeam.league === 'NFL') {
+    await enrichNflWithAthleteStats(players, path);
   }
 
   return {

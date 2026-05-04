@@ -187,6 +187,72 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
   pool.push(...buildStatHeadToHead('seasonAssists', 'Who has more assists this season?', 2, 'medium', 4));
   pool.push(...buildStatHeadToHead('seasonPoints', 'Who has more points this season?', 3, 'medium', 4));
 
+  pool.push(...buildStatHeadToHead('passingYards', 'Who has more passing yards this season?', 200, 'medium', 2));
+  pool.push(...buildStatHeadToHead('passingTds', 'Who has more passing touchdowns this season?', 2, 'medium', 2));
+  pool.push(...buildStatHeadToHead('rushingYards', 'Who has more rushing yards this season?', 80, 'medium', 3));
+  pool.push(...buildStatHeadToHead('rushingTds', 'Who has more rushing touchdowns this season?', 1, 'hard', 2));
+  pool.push(...buildStatHeadToHead('receivingYards', 'Who has more receiving yards this season?', 80, 'medium', 3));
+  pool.push(...buildStatHeadToHead('receivingTds', 'Who has more receiving touchdowns this season?', 1, 'hard', 3));
+  pool.push(...buildStatHeadToHead('receptions', 'Who has more receptions this season?', 5, 'medium', 3));
+
+  // NFL team leader questions (4-choice, same team)
+  function nflTeamLeader(field, label, difficulty) {
+    const candidates = players.filter((p) => p[field] != null && p[field] > 0);
+    if (candidates.length < 4) return [];
+    const sorted = [...candidates].sort((a, b) => b[field] - a[field]);
+    const top = sorted[0];
+    if (sorted[1][field] === top[field]) return [];
+    const distractors = pickN(sorted.slice(1), 3, rand);
+    if (distractors.length !== 3) return [];
+    return [mcq(
+      `Who leads the ${team.name} in ${label} this season?`,
+      top.name,
+      distractors.map((d) => d.name),
+      top,
+      difficulty,
+      rand,
+    )];
+  }
+  pool.push(...nflTeamLeader('passingYards', 'passing yards', 'medium'));
+  pool.push(...nflTeamLeader('rushingYards', 'rushing yards', 'medium'));
+  pool.push(...nflTeamLeader('receivingYards', 'receiving yards', 'medium'));
+  pool.push(...nflTeamLeader('receivingTds', 'receiving touchdowns', 'hard'));
+
+  // NFL stat-line "Who is this player?" — position-aware (hard)
+  for (const player of pickN(players.filter((p) => p.team?.league === 'NFL' && p.name), 3, rand)) {
+    let lines;
+    if (player.passingYards != null && player.passingTds != null) {
+      lines = [
+        `Passing yards: ${player.passingYards.toLocaleString()}`,
+        `Passing TDs: ${player.passingTds}`,
+      ];
+      if (player.rushingYards != null && player.rushingYards >= 100) {
+        lines.push(`Rushing yards: ${player.rushingYards.toLocaleString()}`);
+      }
+    } else if (player.rushingYards != null && player.rushingYards > 0) {
+      lines = [
+        `Rushing yards: ${player.rushingYards.toLocaleString()}`,
+        `Rushing TDs: ${player.rushingTds ?? 0}`,
+      ];
+      if (player.receptions != null && player.receptions > 0) {
+        lines.push(`Receptions: ${player.receptions}`);
+      }
+    } else if (player.receivingYards != null && player.receivingYards > 0) {
+      lines = [
+        `Receptions: ${player.receptions ?? 0}`,
+        `Receiving yards: ${player.receivingYards.toLocaleString()}`,
+        `Receiving TDs: ${player.receivingTds ?? 0}`,
+      ];
+    } else {
+      continue;
+    }
+    const sameTeam = players.filter((p) => p.name && p.name !== player.name);
+    const distractors = pickN(sameTeam, 3, rand);
+    if (distractors.length !== 3) continue;
+    const prompt = `Who is this player?\n\n${lines.join('\n')}`;
+    pool.push(mcq(prompt, player.name, distractors.map((p) => p.name), player, 'hard', rand));
+  }
+
   // Soccer top goal scorer last match (4-choice, same team)
   const soccerScorers = players.filter((p) => p.lastGameGoals != null && team.league === 'Soccer');
   if (soccerScorers.length >= 4) {

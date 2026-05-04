@@ -54,6 +54,17 @@ function wellKnownPlayers(team, players) {
   if (team.league === 'NBA') return topByStat(players, 'ppg');
   if (team.league === 'NHL') return topByStat(players, 'seasonPoints');
   if (team.league === 'MLB') return topByStat(players, 'hits');
+  if (team.league === 'NFL') {
+    const withStats = players.map((p) => ({
+      ...p,
+      _nflFame: (p.passingTds ?? 0)
+        + (p.rushingYards ?? 0) / 100
+        + (p.receivingYards ?? 0) / 100
+        + (p.rushingTds ?? 0) * 2
+        + (p.receivingTds ?? 0) * 2,
+    }));
+    return topByStat(withStats, '_nflFame');
+  }
   return players;
 }
 
