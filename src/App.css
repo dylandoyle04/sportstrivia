@@ -73,6 +73,7 @@
   background: var(--bg-panel);
   border: 3px solid var(--border);
   box-shadow: 4px 4px 0 var(--shadow);
+  position: relative;
 }
 
 .app-header-name {
@@ -85,7 +86,17 @@
   color: var(--accent);
   text-shadow: 2px 2px 0 var(--shadow);
   letter-spacing: 0;
-  margin-left: auto;
+}
+
+.app-header-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.95rem;
+  color: var(--accent);
+  text-shadow:
+    2px 2px 0 var(--shadow),
+    0 0 8px rgba(255, 78, 26, 0.7);
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 
 /* ---------- Home / mode hub ---------- */
@@ -121,10 +132,16 @@
 }
 
 .mode-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 1.25rem;
   margin-top: 1.5rem;
+}
+
+.mode-card {
+  flex: 1 1 260px;
+  max-width: 320px;
 }
 
 /* ---------- Home marquee ---------- */

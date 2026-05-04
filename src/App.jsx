@@ -162,6 +162,7 @@ export default function App() {
         {screen !== 'home' && (
           <button className="back-btn" onClick={goHome}>🏠 Home</button>
         )}
+        <span className="app-header-title">Do You Know Ball?</span>
         <span className="app-header-name">{displayName}</span>
         <button className="back-btn" onClick={handleLogout}>Log out</button>
       </header>
