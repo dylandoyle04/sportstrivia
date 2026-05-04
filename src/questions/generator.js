@@ -39,17 +39,21 @@ function uniqueValues(players, key, excludeValue) {
   )];
 }
 
-function numericDistractors(correct, count, granularity, rand, range = [0.55, 1.45]) {
-  const candidates = new Set();
+function numericDistractors(correct, count, granularity, rand, range = [0.55, 1.45], minSpacing = 0) {
+  const minimumGap = Math.max(minSpacing, granularity);
+  const candidates = [];
   let attempts = 0;
-  while (candidates.size < count && attempts < 100) {
+  while (candidates.length < count && attempts < 200) {
     const factor = range[0] + rand() * (range[1] - range[0]);
     let v = Math.round((correct * factor) / granularity) * granularity;
     if (v <= 0) v = granularity;
-    if (v !== correct) candidates.add(v);
     attempts += 1;
+    if (v === correct) continue;
+    if (Math.abs(v - correct) < minimumGap) continue;
+    if (candidates.some((c) => Math.abs(c - v) < minimumGap)) continue;
+    candidates.push(v);
   }
-  return shuffle([...candidates], rand).slice(0, count);
+  return candidates;
 }
 
 function parseHeightInches(heightStr) {
@@ -432,18 +436,18 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
 
   // Season-high single-game questions (top 20% players only — already filtered upstream by enrichment)
   const seasonHighDefs = [
-    { field: 'seasonHighPts', granularity: 1, league: 'NBA', prompt: (p) => `What is ${p.name}'s high in points in a single game this season?` },
-    { field: 'lastSeasonHighPts', granularity: 1, league: 'NBA', prompt: (p) => `What was ${p.name}'s high in points in a single game last season?` },
-    { field: 'seasonHighPoints', granularity: 1, league: 'NHL', prompt: (p) => `What is ${p.name}'s high in points (goals + assists) in a single game this season?` },
-    { field: 'lastSeasonHighPoints', granularity: 1, league: 'NHL', prompt: (p) => `What was ${p.name}'s high in points (goals + assists) in a single game last season?` },
-    { field: 'seasonHighPassingYards', granularity: 5, league: 'NFL', prompt: (p) => `What is ${p.name}'s high in passing yards in a single game this season?` },
-    { field: 'lastSeasonHighPassingYards', granularity: 5, league: 'NFL', prompt: (p) => `What was ${p.name}'s high in passing yards in a single game last season?` },
-    { field: 'seasonHighRushingYards', granularity: 5, league: 'NFL', prompt: (p) => `What is ${p.name}'s high in rushing yards in a single game this season?` },
-    { field: 'lastSeasonHighRushingYards', granularity: 5, league: 'NFL', prompt: (p) => `What was ${p.name}'s high in rushing yards in a single game last season?` },
-    { field: 'seasonHighReceivingYards', granularity: 5, league: 'NFL', prompt: (p) => `What is ${p.name}'s high in receiving yards in a single game this season?` },
-    { field: 'lastSeasonHighReceivingYards', granularity: 5, league: 'NFL', prompt: (p) => `What was ${p.name}'s high in receiving yards in a single game last season?` },
-    { field: 'seasonHighHits', granularity: 1, league: 'MLB', prompt: (p) => `What is ${p.name}'s high in hits in a single game this season?` },
-    { field: 'lastSeasonHighHits', granularity: 1, league: 'MLB', prompt: (p) => `What was ${p.name}'s high in hits in a single game last season?` },
+    { field: 'seasonHighPts', granularity: 1, minSpacing: 5, league: 'NBA', prompt: (p) => `What is ${p.name}'s high in points in a single game this season?` },
+    { field: 'lastSeasonHighPts', granularity: 1, minSpacing: 5, league: 'NBA', prompt: (p) => `What was ${p.name}'s high in points in a single game last season?` },
+    { field: 'seasonHighPoints', granularity: 1, minSpacing: 1, league: 'NHL', prompt: (p) => `What is ${p.name}'s high in points (goals + assists) in a single game this season?` },
+    { field: 'lastSeasonHighPoints', granularity: 1, minSpacing: 1, league: 'NHL', prompt: (p) => `What was ${p.name}'s high in points (goals + assists) in a single game last season?` },
+    { field: 'seasonHighPassingYards', granularity: 5, minSpacing: 30, league: 'NFL', prompt: (p) => `What is ${p.name}'s high in passing yards in a single game this season?` },
+    { field: 'lastSeasonHighPassingYards', granularity: 5, minSpacing: 30, league: 'NFL', prompt: (p) => `What was ${p.name}'s high in passing yards in a single game last season?` },
+    { field: 'seasonHighRushingYards', granularity: 5, minSpacing: 15, league: 'NFL', prompt: (p) => `What is ${p.name}'s high in rushing yards in a single game this season?` },
+    { field: 'lastSeasonHighRushingYards', granularity: 5, minSpacing: 15, league: 'NFL', prompt: (p) => `What was ${p.name}'s high in rushing yards in a single game last season?` },
+    { field: 'seasonHighReceivingYards', granularity: 5, minSpacing: 15, league: 'NFL', prompt: (p) => `What is ${p.name}'s high in receiving yards in a single game this season?` },
+    { field: 'lastSeasonHighReceivingYards', granularity: 5, minSpacing: 15, league: 'NFL', prompt: (p) => `What was ${p.name}'s high in receiving yards in a single game last season?` },
+    { field: 'seasonHighHits', granularity: 1, minSpacing: 1, league: 'MLB', prompt: (p) => `What is ${p.name}'s high in hits in a single game this season?` },
+    { field: 'lastSeasonHighHits', granularity: 1, minSpacing: 1, league: 'MLB', prompt: (p) => `What was ${p.name}'s high in hits in a single game last season?` },
   ];
   for (const def of seasonHighDefs) {
     const eligible = players.filter((p) =>
@@ -451,7 +455,7 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
     );
     for (const player of pickN(eligible, 3, rand)) {
       const correct = player[def.field];
-      const distractors = numericDistractors(correct, 3, def.granularity, rand);
+      const distractors = numericDistractors(correct, 3, def.granularity, rand, [0.55, 1.45], def.minSpacing);
       if (distractors.length !== 3) continue;
       pool.push(mcq(
         def.prompt(player),
