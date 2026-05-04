@@ -11,69 +11,7 @@ import {
 import { createRng, dateSeed } from './seededRandom';
 import { getNbaStandings, getNhlStandings, getSoccerStandings } from '../api/standings';
 import { getMlbLeaders } from '../api/mlb';
-
-const ELITE_SOCCER_NAMES = [
-  'lionel messi',
-  'cristiano ronaldo',
-  'kylian mbappe',
-  'neymar',
-  'erling haaland',
-  'kevin de bruyne',
-  'jude bellingham',
-  'mohamed salah',
-  'harry kane',
-  'vinicius',
-];
-
-function normalizeName(name) {
-  return (name || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\bjr\.?\b/g, '')
-    .replace(/\bjunior\b/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function isEliteSoccerPlayer(name) {
-  const n = normalizeName(name);
-  if (!n) return false;
-  return ELITE_SOCCER_NAMES.some((elite) => n === elite || n.includes(elite));
-}
-
-function topByStat(players, statKey, fraction = 1 / 3) {
-  const withStat = players.filter((p) => p[statKey] != null);
-  if (withStat.length < 4) return withStat.length > 0 ? withStat : players;
-  const sorted = [...withStat].sort((a, b) => (b[statKey] ?? 0) - (a[statKey] ?? 0));
-  const cutoff = Math.max(3, Math.ceil(sorted.length * fraction));
-  return sorted.slice(0, cutoff);
-}
-
-function wellKnownPlayers(team, players) {
-  if (team.league === 'NBA') return topByStat(players, 'ppg');
-  if (team.league === 'NHL') return topByStat(players, 'seasonPoints');
-  if (team.league === 'MLB') return topByStat(players, 'hits');
-  if (team.league === 'NFL') {
-    const withStats = players.map((p) => ({
-      ...p,
-      _nflFame: (p.passingTds ?? 0)
-        + (p.rushingYards ?? 0) / 100
-        + (p.receivingYards ?? 0) / 100
-        + (p.rushingTds ?? 0) * 2
-        + (p.receivingTds ?? 0) * 2,
-    }));
-    return topByStat(withStats, '_nflFame');
-  }
-  return players;
-}
-
-function sameLeagueAs(team, candidate) {
-  if (!candidate.team) return false;
-  if (candidate.team.league !== team.league) return false;
-  if (team.league === 'Soccer') return candidate.team.competition === team.competition;
-  return true;
-}
+import { selectSubjects, sameLeagueAs } from './wellKnown';
 
 const DAILY_TEAM_COUNT = 8;
 
@@ -100,15 +38,10 @@ export async function loadDailyQuiz(dateStr) {
   );
   const featuredData = settled.filter(Boolean);
 
-  const wellKnownPerTeam = featuredData.map(({ team, players }) => {
-    let subjectPlayers;
-    if (team.league === 'Soccer') {
-      subjectPlayers = players.filter((p) => isEliteSoccerPlayer(p.name));
-    } else {
-      subjectPlayers = wellKnownPlayers(team, players);
-    }
-    return { team, subjectPlayers };
-  });
+  const wellKnownPerTeam = featuredData.map(({ team, players }) => ({
+    team,
+    subjectPlayers: selectSubjects(team, players),
+  }));
   const wellKnownAll = wellKnownPerTeam.flatMap((d) => d.subjectPlayers);
 
   const pool = wellKnownPerTeam.flatMap(({ team, subjectPlayers }) => {

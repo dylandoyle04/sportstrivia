@@ -10,6 +10,7 @@ import {
 } from './generator';
 import { getNbaStandings, getNhlStandings, getSoccerStandings } from '../api/standings';
 import { getMlbLeaders } from '../api/mlb';
+import { selectSubjects, sameLeagueAs } from './wellKnown';
 
 const TEAM_COUNT = 8;
 
@@ -38,13 +39,19 @@ export async function loadLeagueQuiz({ league, competition }) {
     selected.map((t) => loadTeamData(t).catch(() => null)),
   );
   const featuredData = settled.filter(Boolean);
-  const allPlayers = featuredData.flatMap((d) => d.players);
 
-  const pool = featuredData.flatMap(({ team, players }) => {
-    const otherPlayers = allPlayers.filter(
-      (p) => !players.some((fp) => fp.id === p.id),
+  const wellKnownPerTeam = featuredData.map(({ team, players }) => ({
+    team,
+    subjectPlayers: selectSubjects(team, players),
+  }));
+  const wellKnownAll = wellKnownPerTeam.flatMap((d) => d.subjectPlayers);
+
+  const pool = wellKnownPerTeam.flatMap(({ team, subjectPlayers }) => {
+    if (subjectPlayers.length === 0) return [];
+    const otherPlayers = wellKnownAll.filter(
+      (p) => p && !subjectPlayers.some((fp) => fp.id === p.id) && sameLeagueAs(team, p),
     );
-    return buildQuestionPool({ team, players, otherPlayers });
+    return buildQuestionPool({ team, players: subjectPlayers, otherPlayers });
   });
 
   if (league === 'NBA') {

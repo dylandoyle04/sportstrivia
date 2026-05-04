@@ -39,6 +39,38 @@ function uniqueValues(players, key, excludeValue) {
   )];
 }
 
+function parseHeightInches(heightStr) {
+  if (heightStr == null) return null;
+  const m = String(heightStr).match(/(\d+)['′]\s*(\d+)/);
+  if (!m) return null;
+  return parseInt(m[1], 10) * 12 + parseInt(m[2], 10);
+}
+
+function pickSpacedHeights(allPlayers, correctHeight, correctIn, count, minGap, rand) {
+  const seen = new Set([correctHeight]);
+  const candidates = [];
+  for (const p of allPlayers) {
+    const h = p?.height;
+    if (!h || seen.has(h)) continue;
+    seen.add(h);
+    const inches = parseHeightInches(h);
+    if (inches == null) continue;
+    if (Math.abs(inches - correctIn) <= minGap) continue;
+    candidates.push({ str: h, inches });
+  }
+  const shuffled = shuffle(candidates, rand);
+  const picked = [];
+  const pickedInches = [correctIn];
+  for (const cand of shuffled) {
+    if (picked.length >= count) break;
+    if (pickedInches.every((p) => Math.abs(p - cand.inches) > minGap)) {
+      picked.push(cand.str);
+      pickedInches.push(cand.inches);
+    }
+  }
+  return picked;
+}
+
 function buildFieldQuestion({ players, allPlayers, field, promptFor, count, difficulty }, rand) {
   const eligible = players.filter((p) => p[field] != null && p.name);
   const out = [];
@@ -96,11 +128,16 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
     count: 1, difficulty: 'medium',
   }, rand));
 
-  pool.push(...buildFieldQuestion({
-    players, allPlayers, field: 'height',
-    promptFor: (p) => `How tall is ${p.name}?`,
-    count: 1, difficulty: 'medium',
-  }, rand));
+  // Height question — distractors must be > 3 inches apart from correct AND each other
+  const heightSubjects = players.filter((p) => p.height && p.name);
+  for (const player of pickN(heightSubjects, 1, rand)) {
+    const correctIn = parseHeightInches(player.height);
+    if (correctIn == null) continue;
+    const distractors = pickSpacedHeights(allPlayers, player.height, correctIn, 3, 4, rand);
+    if (distractors.length === 3) {
+      pool.push(mcq(`How tall is ${player.name}?`, player.height, distractors, player, 'medium', rand));
+    }
+  }
 
   pool.push(...buildFieldQuestion({
     players, allPlayers, field: 'country',
