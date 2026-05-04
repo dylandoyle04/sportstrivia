@@ -48,6 +48,18 @@
   width: 100%;
   height: auto;
   margin: 0 auto 2rem;
+  animation: logoPulse 3.5s ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.5)) drop-shadow(0 0 12px rgba(255, 215, 0, 0.25));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 14px rgba(255, 215, 0, 0.95)) drop-shadow(0 0 32px rgba(255, 215, 0, 0.5));
+    transform: scale(1.015);
+  }
 }
 
 .mode-grid {
@@ -55,6 +67,41 @@
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1.25rem;
   margin-top: 1.5rem;
+}
+
+/* ---------- Home marquee ---------- */
+
+.marquee {
+  overflow: hidden;
+  margin: 0 0 1.5rem;
+  border-top: 3px solid var(--border);
+  border-bottom: 3px solid var(--border);
+  background: var(--bg-panel);
+  box-shadow: 4px 4px 0 var(--shadow);
+  padding: 0.85rem 0;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 30s linear infinite;
+}
+
+.marquee-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1rem;
+  color: var(--accent);
+  text-shadow:
+    2px 2px 0 var(--shadow),
+    0 0 10px rgba(255, 215, 0, 0.7);
+  white-space: nowrap;
+  padding-right: 2rem;
+  letter-spacing: 0.04em;
+}
+
+@keyframes marqueeScroll {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
 }
 
 .mode-card {
@@ -180,7 +227,7 @@
   color: var(--accent);
   text-shadow:
     3px 3px 0 var(--shadow),
-    0 0 12px rgba(255, 78, 26, 0.7);
+    0 0 12px rgba(255, 215, 0, 0.7);
 }
 
 .daily-result-note {
@@ -672,7 +719,7 @@
   color: var(--accent);
   text-shadow:
     2px 2px 0 var(--shadow),
-    0 0 10px rgba(255, 78, 26, 0.75);
+    0 0 10px rgba(255, 215, 0, 0.75);
   letter-spacing: 0;
 }
 
@@ -701,7 +748,7 @@
   color: var(--accent-red);
   text-shadow:
     2px 2px 0 var(--shadow),
-    0 0 12px rgba(255, 45, 31, 0.9);
+    0 0 12px rgba(255, 77, 157, 0.9);
   animation: timerPulse 0.6s ease-in-out infinite alternate;
 }
 .timer--danger .timer-bar-fill {
@@ -726,14 +773,14 @@
   color: var(--accent-green);
   text-shadow:
     2px 2px 0 var(--shadow),
-    0 0 12px rgba(168, 200, 80, 0.9);
+    0 0 12px rgba(93, 255, 174, 0.9);
 }
 
 .timer-flash--minus {
   color: var(--accent-red);
   text-shadow:
     2px 2px 0 var(--shadow),
-    0 0 12px rgba(255, 45, 31, 0.9);
+    0 0 12px rgba(255, 77, 157, 0.9);
 }
 
 @keyframes timerFlash {
@@ -775,6 +822,9 @@
 
 .choice:hover:not(:disabled) {
   background: var(--bg-panel-alt);
+  border-color: var(--accent);
+  color: var(--accent);
+  transition: border-color 0.05s, color 0.05s;
 }
 
 .choice:active:not(:disabled) {
@@ -832,16 +882,16 @@
   color: var(--accent-green);
   text-shadow:
     5px 5px 0 var(--shadow),
-    0 0 14px rgba(168, 200, 80, 0.9),
-    0 0 28px rgba(168, 200, 80, 0.5);
+    0 0 14px rgba(93, 255, 174, 0.9),
+    0 0 28px rgba(93, 255, 174, 0.5);
 }
 
 .verdict-wrong {
   color: var(--accent-red);
   text-shadow:
     5px 5px 0 var(--shadow),
-    0 0 14px rgba(255, 45, 31, 0.9),
-    0 0 28px rgba(255, 45, 31, 0.5);
+    0 0 14px rgba(255, 77, 157, 0.9),
+    0 0 28px rgba(255, 77, 157, 0.5);
 }
 
 .player-photo {
@@ -867,7 +917,7 @@
   text-align: center;
   text-shadow:
     3px 3px 0 var(--shadow),
-    0 0 10px rgba(255, 78, 26, 0.8);
+    0 0 10px rgba(255, 215, 0, 0.8);
   letter-spacing: 0;
 }
 
@@ -1008,6 +1058,26 @@
   text-shadow: 3px 3px 0 var(--shadow);
 }
 
+.loader::before {
+  content: '';
+  display: block;
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  margin: 0 auto 1.75rem;
+  box-shadow:
+    3px 3px 0 var(--shadow),
+    0 0 12px rgba(255, 215, 0, 0.7);
+  animation: loaderBounce 0.95s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+@keyframes loaderBounce {
+  0%, 100% { transform: translateY(0)    scaleX(1.1) scaleY(0.85); }
+  10%      { transform: translateY(-6px) scaleX(1)   scaleY(1); }
+  50%      { transform: translateY(-44px) scaleX(0.9) scaleY(1.15); }
+  90%      { transform: translateY(-6px) scaleX(1)   scaleY(1); }
+}
+
 .placeholder {
   padding: 2rem;
   border: 3px dashed var(--ink-dim);
@@ -1045,6 +1115,7 @@
   height: auto;
   margin: 0 auto 1.5rem;
   display: block;
+  animation: logoPulse 3.5s ease-in-out infinite;
 }
 
 .auth-title {
@@ -1100,7 +1171,7 @@
   margin: 0;
   padding: 0.75rem 1rem;
   border: 3px solid var(--accent-red);
-  background: rgba(255, 75, 75, 0.15);
+  background: rgba(255, 77, 157, 0.15);
   font-family: 'VT323', monospace;
   font-size: 1.1rem;
   color: var(--accent-red);

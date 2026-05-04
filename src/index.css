@@ -1,15 +1,15 @@
 :root {
   color-scheme: dark;
-  --bg: #0d0503;
-  --bg-panel: #2b0d05;
-  --bg-panel-alt: #4a1409;
-  --ink: #ffe4b5;
-  --ink-dim: #d4896e;
-  --accent: #ff4e1a;
-  --accent-green: #a8c850;
-  --accent-red: #ff2d1f;
-  --accent-blue: #ffb347;
-  --border: #ffe4b5;
+  --bg: #050208;
+  --bg-panel: #1a0c33;
+  --bg-panel-alt: #2c1456;
+  --ink: #d6b56e;
+  --ink-dim: #8a7240;
+  --accent: #c9a227;
+  --accent-green: #5dffae;
+  --accent-red: #ff4d9d;
+  --accent-blue: #8b5cf6;
+  --border: #c9a227;
   --shadow: #000;
 
   font-family: 'VT323', 'Courier New', monospace;
@@ -21,17 +21,55 @@ body {
   margin: 0;
   min-height: 100vh;
   background-color: var(--bg);
-  background-image:
-    repeating-linear-gradient(
-      0deg,
-      transparent 0,
-      transparent 3px,
-      rgba(0, 0, 0, 0.15) 3px,
-      rgba(0, 0, 0, 0.15) 4px
-    );
   color: var(--ink);
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  position: relative;
+}
+
+/* Drifting CRT scanlines */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent 0,
+    transparent 3px,
+    rgba(0, 0, 0, 0.22) 3px,
+    rgba(0, 0, 0, 0.22) 4px
+  );
+  animation: scanlineDrift 6s linear infinite;
+}
+
+/* CRT vsync flyback (slow bright bar drifting top→bottom) */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9997;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 47%,
+    rgba(255, 215, 0, 0.06) 50%,
+    transparent 53%,
+    transparent 100%
+  );
+  animation: vsyncRoll 9s linear infinite;
+}
+
+@keyframes scanlineDrift {
+  from { background-position-y: 0; }
+  to { background-position-y: 8px; }
+}
+
+@keyframes vsyncRoll {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(100%); }
 }
 
 * {
@@ -44,9 +82,21 @@ h1, h2, h3, h4 {
   letter-spacing: 0;
   text-shadow:
     3px 3px 0 var(--shadow),
-    0 0 6px rgba(255, 78, 26, 0.95),
-    0 0 14px rgba(255, 78, 26, 0.7),
-    0 0 28px rgba(255, 140, 66, 0.4);
+    0 0 6px rgba(255, 215, 0, 0.95),
+    0 0 14px rgba(255, 215, 0, 0.7),
+    0 0 28px rgba(168, 85, 247, 0.55);
+}
+
+h1 {
+  animation: titleFlicker 7s linear infinite;
+}
+
+@keyframes titleFlicker {
+  0%, 89%, 100%      { opacity: 1; }
+  90%, 90.5%          { opacity: 0.55; }
+  91%, 91.4%          { opacity: 1; }
+  91.5%, 91.9%        { opacity: 0.7; }
+  92%                 { opacity: 1; }
 }
 
 button {

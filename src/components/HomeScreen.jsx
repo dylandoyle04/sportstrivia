@@ -1,3 +1,5 @@
+import DailyMarquee from './DailyMarquee';
+
 const MODES = [
   { key: 'daily', title: 'Daily Trivia', desc: '9 questions. One shot a day.' },
   { key: 'last-night', title: 'Last Night', desc: 'Yesterday\'s games. One shot a day.' },
@@ -10,7 +12,7 @@ export default function HomeScreen({ onSelect }) {
   return (
     <div className="home">
       <img src="/logo.png" alt="You Know Ball?" className="home-logo" />
-      <p className="sub">Choose your game mode.</p>
+      <DailyMarquee />
       <div className="mode-grid">
         {MODES.map((mode) => (
           <button
