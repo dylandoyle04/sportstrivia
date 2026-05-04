@@ -1,6 +1,12 @@
 import { loadTeamData } from '../api/league';
 import { TEAMS } from '../teams';
-import { generateQuestions } from './generator';
+import { buildQuestionPool, selectByMix } from './generator';
+import {
+  nflLeaderQuestions,
+  nbaLeaderQuestions,
+  nhlLeaderQuestions,
+  mlbLastSeasonLeaderQuestions,
+} from './leagueLeaders';
 
 function pickOthers(pickedTeam, n) {
   const candidates = TEAMS.filter((t) => {
@@ -23,6 +29,15 @@ export async function loadQuiz(pickedTeam) {
   );
   const otherPlayers = otherResults.filter(Boolean).flatMap((d) => d.players);
 
-  const questions = generateQuestions({ team, players, otherPlayers });
+  const pool = buildQuestionPool({ team, players, otherPlayers });
+
+  try {
+    if (pickedTeam.league === 'NFL') pool.push(...await nflLeaderQuestions());
+    else if (pickedTeam.league === 'NBA') pool.push(...await nbaLeaderQuestions());
+    else if (pickedTeam.league === 'NHL') pool.push(...await nhlLeaderQuestions());
+    else if (pickedTeam.league === 'MLB') pool.push(...await mlbLastSeasonLeaderQuestions());
+  } catch { /* optional */ }
+
+  const questions = selectByMix(pool, { easy: 4, medium: 3, hard: 3 });
   return { team, questions };
 }

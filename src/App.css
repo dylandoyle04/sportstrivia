@@ -131,11 +131,13 @@
 
 .marquee {
   overflow: hidden;
-  margin: 0 0 1.5rem;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  margin-bottom: 1.5rem;
   border-top: 3px solid var(--border);
   border-bottom: 3px solid var(--border);
   background: var(--bg-panel);
-  box-shadow: 4px 4px 0 var(--shadow);
   padding: 0.85rem 0;
 }
 

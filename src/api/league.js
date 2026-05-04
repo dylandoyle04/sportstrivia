@@ -203,12 +203,13 @@ async function enrichNbaFromBalldontlie(players, bdlTeamId) {
 
 function currentNbaSeasonYear() {
   const now = new Date();
-  return now.getMonth() >= 9 ? now.getFullYear() : now.getFullYear() - 1;
+  // ESPN season.year = year season ENDS. NBA Oct-June.
+  return now.getMonth() >= 9 ? now.getFullYear() + 1 : now.getFullYear();
 }
 
 function currentNhlSeasonYear() {
   const now = new Date();
-  return now.getMonth() >= 9 ? now.getFullYear() : now.getFullYear() - 1;
+  return now.getMonth() >= 9 ? now.getFullYear() + 1 : now.getFullYear();
 }
 
 function parseNbaAthleteStats(data) {
@@ -264,7 +265,9 @@ function parseNbaAthleteStats(data) {
   });
 
   const latestRow = rows[rows.length - 1];
+  const isCurrentSeasonRow = latestRow?.season?.year === currentNbaSeasonYear();
   const num = (idx) => {
+    if (!isCurrentSeasonRow) return null;
     if (idx < 0) return null;
     const v = parseFloat(latestRow.stats?.[idx] ?? '');
     return Number.isFinite(v) ? v : null;
@@ -352,7 +355,9 @@ function parseNhlAthleteStats(data) {
   });
 
   const latestRow = rows[rows.length - 1];
+  const isCurrentSeasonRow = latestRow?.season?.year === currentNhlSeasonYear();
   const num = (idx) => {
+    if (!isCurrentSeasonRow) return null;
     if (idx < 0) return null;
     const v = parseFloat(latestRow.stats?.[idx] ?? '');
     return Number.isFinite(v) ? v : null;
