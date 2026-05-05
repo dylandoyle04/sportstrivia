@@ -1,5 +1,7 @@
 import { TEAMS } from '../teams';
 import { topPercentilePlayers } from './wellKnown';
+import { getTeamSpecificQuestions } from './teamSpecific';
+import { getSoccerStarTrivia } from './soccerStarTrivia';
 
 const NBA_TEAM_NAMES = [...new Set(TEAMS.filter((t) => t.league === 'NBA').map((t) => t.name))];
 const NHL_TEAM_NAMES = [...new Set(TEAMS.filter((t) => t.league === 'NHL').map((t) => t.name))];
@@ -175,11 +177,15 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
     count: 5, difficulty: 'easy',
   }, rand));
 
-  pool.push(...buildFieldQuestion({
-    players, allPlayers, field: 'jersey',
-    promptFor: (p) => `What jersey number does ${p.name} wear?`,
-    count: 1, difficulty: 'medium',
-  }, rand));
+  // Jersey questions are rare and only ask about top 20% of the roster
+  if (rand() < 0.35) {
+    const eliteJersey = topPercentilePlayers(team, players, 0.2);
+    pool.push(...buildFieldQuestion({
+      players: eliteJersey, allPlayers, field: 'jersey',
+      promptFor: (p) => `What jersey number does ${p.name} wear?`,
+      count: 1, difficulty: 'medium',
+    }, rand));
+  }
 
   pool.push(...buildFieldQuestion({
     players, allPlayers, field: 'age',
@@ -198,11 +204,13 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
     }
   }
 
-  pool.push(...buildFieldQuestion({
-    players, allPlayers, field: 'country',
-    promptFor: (p) => `What country is ${p.name} from?`,
-    count: 1, difficulty: 'medium',
-  }, rand));
+  if (team.league === 'NBA' || team.league === 'NHL' || team.league === 'Soccer') {
+    pool.push(...buildFieldQuestion({
+      players, allPlayers, field: 'country',
+      promptFor: (p) => `What country is ${p.name} from?`,
+      count: 1, difficulty: 'medium',
+    }, rand));
+  }
 
   pool.push(...buildFieldQuestion({
     players, allPlayers, field: 'college',
@@ -578,6 +586,14 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
       ...rows.map(([label, value]) => `${label}: ${value}`),
     ].join('\n');
     pool.push(mcq(prompt, player.name, distractors.map((p) => p.name), player, 'hard', rand));
+  }
+
+  pool.push(...getTeamSpecificQuestions(team.name, rand));
+
+  if (team.league === 'Soccer') {
+    for (const player of players) {
+      pool.push(...getSoccerStarTrivia(player, rand));
+    }
   }
 
   return pool;

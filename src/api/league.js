@@ -29,6 +29,31 @@ function pathFor(team) {
   return LEAGUE_PATHS[team.league];
 }
 
+const COUNTRY_CODES = {
+  USA: 'United States', CAN: 'Canada', SWE: 'Sweden', FIN: 'Finland',
+  RUS: 'Russia', CZE: 'Czech Republic', SVK: 'Slovakia',
+  GER: 'Germany', DEU: 'Germany',
+  FRA: 'France', DNK: 'Denmark', DEN: 'Denmark',
+  CHE: 'Switzerland', SUI: 'Switzerland',
+  AUT: 'Austria', LVA: 'Latvia', LAT: 'Latvia',
+  BLR: 'Belarus', UKR: 'Ukraine', KAZ: 'Kazakhstan',
+  AUS: 'Australia', NOR: 'Norway', SVN: 'Slovenia',
+  NLD: 'Netherlands', ITA: 'Italy', GBR: 'United Kingdom',
+  IRL: 'Ireland', ESP: 'Spain', POL: 'Poland', JPN: 'Japan',
+  CHN: 'China', KOR: 'South Korea', ARG: 'Argentina', BRA: 'Brazil',
+  MEX: 'Mexico', PRT: 'Portugal', HUN: 'Hungary',
+  ROU: 'Romania', ROM: 'Romania', HRV: 'Croatia', SRB: 'Serbia',
+  EST: 'Estonia', LTU: 'Lithuania', BIH: 'Bosnia and Herzegovina',
+};
+
+function normalizeCountry(country) {
+  if (!country) return null;
+  const c = String(country).trim();
+  const upper = c.toUpperCase();
+  if (COUNTRY_CODES[upper]) return COUNTRY_CODES[upper];
+  return c;
+}
+
 function normalizePlayer(athlete) {
   return {
     id: athlete.id,
@@ -40,7 +65,7 @@ function normalizePlayer(athlete) {
     height: athlete.displayHeight ?? null,
     weight: athlete.displayWeight ?? null,
     college: athlete.college?.name ?? null,
-    country: athlete.birthPlace?.country ?? athlete.citizenship ?? null,
+    country: normalizeCountry(athlete.birthPlace?.country ?? athlete.citizenship),
     photo: athlete.headshot?.href ?? null,
     draftYear: null,
     draftPick: null,
@@ -284,7 +309,7 @@ function parseNbaAthleteStats(data) {
 }
 
 async function enrichNbaWithAthleteStats(players, path) {
-  const toFetch = players.slice(0, 8).filter((p) => p.id);
+  const toFetch = players.slice(0, 15).filter((p) => p.id);
   await Promise.all(
     toFetch.map(async (player) => {
       try {
@@ -374,7 +399,7 @@ function parseNhlAthleteStats(data) {
 }
 
 async function enrichNhlWithAthleteStats(players, path) {
-  const toFetch = players.slice(0, 8).filter((p) => p.id);
+  const toFetch = players.slice(0, 15).filter((p) => p.id);
   await Promise.all(
     toFetch.map(async (player) => {
       try {

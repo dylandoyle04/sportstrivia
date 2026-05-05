@@ -189,7 +189,7 @@
 .marquee-track {
   display: flex;
   width: fit-content;
-  animation: marqueeScroll 38s linear infinite;
+  animation: marqueeScroll 60s linear infinite;
   will-change: transform;
 }
 

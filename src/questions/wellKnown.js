@@ -28,18 +28,19 @@ export function isEliteSoccerPlayer(name) {
   return ELITE_SOCCER_NAMES.some((elite) => n === elite || n.includes(elite));
 }
 
-function topByStat(players, statKey, fraction = 1 / 3) {
-  const withStat = players.filter((p) => p[statKey] != null);
-  if (withStat.length < 4) return withStat.length > 0 ? withStat : players;
+function topByStat(players, statKey, fraction = 1 / 3, minValue = null) {
+  let withStat = players.filter((p) => p[statKey] != null);
+  if (minValue != null) withStat = withStat.filter((p) => p[statKey] >= minValue);
+  if (withStat.length === 0) return [];
   const sorted = [...withStat].sort((a, b) => (b[statKey] ?? 0) - (a[statKey] ?? 0));
-  const cutoff = Math.max(3, Math.ceil(sorted.length * fraction));
+  const cutoff = Math.max(2, Math.ceil(sorted.length * fraction));
   return sorted.slice(0, cutoff);
 }
 
 export function topPercentilePlayers(team, players, fraction = 1 / 3) {
-  if (team.league === 'NBA') return topByStat(players, 'ppg', fraction);
-  if (team.league === 'NHL') return topByStat(players, 'seasonPoints', fraction);
-  if (team.league === 'MLB') return topByStat(players, 'hits', fraction);
+  if (team.league === 'NBA') return topByStat(players, 'ppg', fraction, 6);
+  if (team.league === 'NHL') return topByStat(players, 'seasonPoints', fraction, 8);
+  if (team.league === 'MLB') return topByStat(players, 'hits', fraction, 8);
   if (team.league === 'NFL') {
     const withFame = players.map((p) => {
       p._nflFame = (p.passingTds ?? 0)
@@ -49,7 +50,7 @@ export function topPercentilePlayers(team, players, fraction = 1 / 3) {
         + (p.receivingTds ?? 0) * 2;
       return p;
     });
-    return topByStat(withFame, '_nflFame', fraction);
+    return topByStat(withFame, '_nflFame', fraction, 3);
   }
   return players;
 }

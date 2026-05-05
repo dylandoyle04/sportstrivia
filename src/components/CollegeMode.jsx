@@ -56,7 +56,7 @@ export default function CollegeMode({ userId, onBack }) {
         timerSeconds={TIMER_SECONDS}
         timerMode="session"
         correctBonus={1}
-        wrongPenalty={5}
+        wrongPenalty={3}
         onDone={handleDone}
       />
     );
