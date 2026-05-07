@@ -138,6 +138,7 @@ export function selectByMixUniqueTeams(pool, mix, rand = Math.random) {
   };
   const usedTeams = new Set();
   const result = [];
+  const overflow = [];
 
   for (const diff of ['easy', 'medium', 'hard']) {
     const want = mix[diff] ?? 0;
@@ -160,6 +161,20 @@ export function selectByMixUniqueTeams(pool, mix, rand = Math.random) {
       taken.push(skipped.shift());
     }
     result.push(...taken);
+    overflow.push(...skipped);
+  }
+
+  // Final cross-difficulty backfill so we always reach the desired total
+  const desiredTotal = Object.values(mix).reduce((a, b) => a + b, 0);
+  if (result.length < desiredTotal) {
+    const seen = new Set(result.map((q) => q.prompt));
+    const fillers = shuffle(
+      overflow.filter((q) => !seen.has(q.prompt)),
+      rand,
+    );
+    while (result.length < desiredTotal && fillers.length > 0) {
+      result.push(fillers.shift());
+    }
   }
 
   return shuffle(result, rand);
