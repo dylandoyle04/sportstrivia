@@ -37,6 +37,7 @@ const SOCCER_LEAGUE_PATHS = {
   'Serie A': 'ita.1',
   Bundesliga: 'ger.1',
   'Ligue 1': 'fra.1',
+  'Brasileirão': 'bra.1',
 };
 
 export async function getSoccerStandings(competition) {

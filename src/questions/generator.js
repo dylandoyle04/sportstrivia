@@ -1,6 +1,6 @@
 import { TEAMS } from '../teams';
 import { topPercentilePlayers } from './wellKnown';
-import { getTeamSpecificQuestions } from './teamSpecific';
+import { getTeamSpecificQuestions, buildSoccerGoalkeeperQuestion } from './teamSpecific';
 import { getSoccerStarTrivia } from './soccerStarTrivia';
 
 const NBA_TEAM_NAMES = [...new Set(TEAMS.filter((t) => t.league === 'NBA').map((t) => t.name))];
@@ -609,6 +609,7 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
     for (const player of players) {
       pool.push(...getSoccerStarTrivia(player, rand));
     }
+    pool.push(...buildSoccerGoalkeeperQuestion({ team, players }, rand));
   }
 
   return pool;
@@ -695,26 +696,8 @@ export function buildLastNightQuestions(games, rand = Math.random) {
     ));
   }
 
-  // 9. Runs scored by [MLB Team] last night? (hard, 4-choice — only 1)
+  // 9. (Removed: "How many runs did X score" — too hard. "Who won" Qs cover MLB games.)
   const mlbGames = games.filter((g) => g.leagueKey === 'MLB');
-  const mlbScores = [...new Set(mlbGames.flatMap((g) => [g.home.score, g.away.score]))];
-  for (const g of shuffle(mlbGames, rand).slice(0, 1)) {
-    for (const side of ['home', 'away']) {
-      const team = g[side];
-      const correct = String(team.score);
-      const distractors = pickN(mlbScores.filter((s) => String(s) !== correct).map(String), 3, rand);
-      if (distractors.length !== 3) continue;
-      add(mcq(
-        `How many runs did the ${team.name} score last night?`,
-        correct,
-        distractors,
-        null,
-        'hard',
-        rand,
-      ));
-      break;
-    }
-  }
 
   // 3. Most NBA points last night? (medium, 4-choice)
   const nbaTeams = games.filter((g) => g.leagueKey === 'NBA').flatMap((g) => [

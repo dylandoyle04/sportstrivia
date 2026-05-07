@@ -22,6 +22,7 @@ const SOCCER_PATHS = {
   'Serie A': { sport: 'soccer', league: 'ita.1' },
   Bundesliga: { sport: 'soccer', league: 'ger.1' },
   'Ligue 1': { sport: 'soccer', league: 'fra.1' },
+  'Brasileirão': { sport: 'soccer', league: 'bra.1' },
 };
 
 function pathFor(team) {
