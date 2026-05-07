@@ -34,6 +34,7 @@ export default function QuizRunner({
   timerMode = 'per-question',
   correctBonus = 0,
   wrongPenalty = 0,
+  allowSkip = false,
   onDone,
 }) {
   const [index, setIndex] = useState(0);
@@ -105,6 +106,22 @@ export default function QuizRunner({
     }, revealMs);
   }
 
+  function handleSkip() {
+    if (selected !== null) return;
+    setSelected('skip');
+    setStreak(0);
+    setTimeout(() => {
+      if (endedRef.current) return;
+      if (index + 1 >= questions.length) {
+        endedRef.current = true;
+        onDone(score, questions.length, Date.now() - startedAt.current);
+      } else {
+        setIndex(index + 1);
+        setSelected(null);
+      }
+    }, Math.min(900, revealMs));
+  }
+
   const q = questions[index];
 
   return (
@@ -134,7 +151,7 @@ export default function QuizRunner({
       <div className="choices">
         {q.choices.map((choice, i) => {
           let cls = 'choice';
-          if (selected !== null) {
+          if (selected !== null && selected !== 'skip') {
             if (i === q.correctIndex) cls += ' correct';
             else if (i === selected) cls += ' wrong';
           }
@@ -150,6 +167,11 @@ export default function QuizRunner({
           );
         })}
       </div>
+      {allowSkip && selected === null && (
+        <button className="btn-skip" onClick={handleSkip}>
+          Skip (no penalty)
+        </button>
+      )}
       {streak >= 2 && (
         <div className="streak-indicator">🔥 {streak}</div>
       )}
@@ -159,9 +181,9 @@ export default function QuizRunner({
         </div>
       )}
       {selected !== null && (
-        <div className={`verdict-overlay${selected !== q.correctIndex ? ' verdict-overlay--wrong' : ''}`}>
-          <h2 className={`verdict-text verdict-${selected === q.correctIndex ? 'correct' : 'wrong'}`}>
-            {selected === q.correctIndex ? 'CORRECT' : 'NOPE'}
+        <div className={`verdict-overlay${selected === 'skip' ? ' verdict-overlay--skip' : (selected !== q.correctIndex ? ' verdict-overlay--wrong' : '')}`}>
+          <h2 className={`verdict-text verdict-${selected === 'skip' ? 'skip' : (selected === q.correctIndex ? 'correct' : 'wrong')}`}>
+            {selected === 'skip' ? 'SKIPPED' : (selected === q.correctIndex ? 'CORRECT' : 'NOPE')}
           </h2>
           {q.player?.photo && (
             <img src={q.player.photo} alt={q.player?.name ?? ''} className="player-photo" />

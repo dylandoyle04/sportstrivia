@@ -986,6 +986,38 @@
   letter-spacing: 0.02em;
 }
 
+.verdict-skip {
+  color: var(--ink);
+  text-shadow:
+    5px 5px 0 var(--shadow),
+    0 0 14px rgba(212, 137, 110, 0.7),
+    0 0 28px rgba(212, 137, 110, 0.4);
+}
+
+.btn-skip {
+  display: block;
+  margin: 1rem auto 0;
+  padding: 0.7rem 1.4rem;
+  background: var(--bg-panel);
+  border: 3px solid var(--ink-dim);
+  color: var(--ink-dim);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.7rem;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--shadow);
+  letter-spacing: 0;
+}
+
+.btn-skip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-skip:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--shadow);
+}
+
 .verdict-correct {
   color: var(--accent-green);
   text-shadow:
