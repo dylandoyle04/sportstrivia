@@ -1087,19 +1087,20 @@
 
 .streak-burst {
   position: fixed;
-  inset: 0;
+  top: 22vh;
+  left: 0;
+  right: 0;
   display: flex;
-  align-items: center;
   justify-content: center;
-  z-index: 200;
+  z-index: 250;
   pointer-events: none;
   font-family: 'Press Start 2P', monospace;
-  font-size: clamp(2rem, 7vw, 4rem);
+  font-size: clamp(1.4rem, 4vw, 2.4rem);
   color: var(--accent);
   text-shadow:
-    4px 4px 0 var(--shadow),
-    0 0 18px rgba(255, 78, 26, 0.95),
-    0 0 36px rgba(255, 140, 66, 0.6);
+    3px 3px 0 var(--shadow),
+    0 0 14px rgba(255, 78, 26, 0.95),
+    0 0 28px rgba(255, 140, 66, 0.6);
   letter-spacing: 0.04em;
   animation: streakBurst 1s ease-out forwards;
 }
