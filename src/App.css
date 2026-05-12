@@ -254,6 +254,14 @@
 
 /* ---------- Daily Trivia ---------- */
 
+.daily {
+  text-align: center;
+}
+
+.picker {
+  text-align: center;
+}
+
 .daily h1 {
   font-size: 1.9rem;
   margin: 0 0 0.35rem;
@@ -306,7 +314,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .daily-result {

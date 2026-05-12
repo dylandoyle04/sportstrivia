@@ -109,12 +109,18 @@ function normalizePlayer(athlete) {
   };
 }
 
-function parseNflAthleteStats(data) {
+function parseNflAthleteStats(data, currentTeamId) {
   const cats = data?.categories ?? [];
   function getLatest(name) {
     const cat = cats.find((c) => c.name === name);
     if (!cat?.statistics?.length) return null;
-    const sorted = [...cat.statistics].sort(
+    let rows = cat.statistics;
+    if (currentTeamId != null) {
+      const onTeam = rows.filter((r) => String(r.teamId) === String(currentTeamId));
+      rows = onTeam.length > 0 ? onTeam : [];
+    }
+    if (rows.length === 0) return null;
+    const sorted = [...rows].sort(
       (a, b) => (b.season?.year ?? 0) - (a.season?.year ?? 0),
     );
     return { row: sorted[0], labels: cat.labels ?? [] };
@@ -143,13 +149,13 @@ function parseNflAthleteStats(data) {
 
 const NFL_SKILL_POSITIONS = new Set(['QB', 'RB', 'WR', 'TE']);
 
-async function enrichNflWithAthleteStats(players, path) {
+async function enrichNflWithAthleteStats(players, path, teamId) {
   const skill = players.filter((p) => p.id && NFL_SKILL_POSITIONS.has(p.positionAbbr));
   await Promise.all(
     skill.map(async (player) => {
       try {
         const data = await espn.getAthleteStats(path.sport, path.league, player.id);
-        const parsed = parseNflAthleteStats(data);
+        const parsed = parseNflAthleteStats(data, teamId);
         for (const k of ['passingYards', 'passingTds', 'rushingYards', 'rushingTds', 'receivingYards', 'receivingTds', 'receptions']) {
           if (parsed[k] != null) player[k] = parsed[k];
         }
@@ -238,7 +244,7 @@ function currentNhlSeasonYear() {
   return now.getMonth() >= 9 ? now.getFullYear() + 1 : now.getFullYear();
 }
 
-function parseNbaAthleteStats(data) {
+function parseNbaAthleteStats(data, currentTeamId) {
   const teams = data?.teams ?? {};
   const avg = (data?.categories ?? []).find((c) => c.name === 'averages');
   if (!avg) return { teamHistoryString: null, latestPpg: null };
@@ -290,7 +296,12 @@ function parseNbaAthleteStats(data) {
     return `${h.name}: ${h.startYear}-${h.endYear + 1}`;
   });
 
-  const latestRow = rows[rows.length - 1];
+  // Only use latest stats from CURRENT team — players traded in shouldn't
+  // surface their old team's stats as their current performance.
+  const onCurrentTeam = currentTeamId != null
+    ? rows.filter((r) => String(r.teamId) === String(currentTeamId))
+    : rows;
+  const latestRow = onCurrentTeam[onCurrentTeam.length - 1];
   const isCurrentSeasonRow = latestRow?.season?.year === currentNbaSeasonYear();
   const num = (idx) => {
     if (!isCurrentSeasonRow) return null;
@@ -309,13 +320,13 @@ function parseNbaAthleteStats(data) {
   };
 }
 
-async function enrichNbaWithAthleteStats(players, path) {
+async function enrichNbaWithAthleteStats(players, path, teamId) {
   const toFetch = players.slice(0, 15).filter((p) => p.id);
   await Promise.all(
     toFetch.map(async (player) => {
       try {
         const data = await espn.getAthleteStats(path.sport, path.league, player.id);
-        const parsed = parseNbaAthleteStats(data);
+        const parsed = parseNbaAthleteStats(data, teamId);
         if (parsed.teamHistoryString && parsed.teamCount >= 2) {
           player.teamHistoryString = parsed.teamHistoryString;
         }
@@ -330,7 +341,7 @@ async function enrichNbaWithAthleteStats(players, path) {
   );
 }
 
-function parseNhlAthleteStats(data) {
+function parseNhlAthleteStats(data, currentTeamId) {
   const teams = data?.teams ?? {};
   const cats = data?.categories ?? [];
   const cat = cats.find(
@@ -380,7 +391,10 @@ function parseNhlAthleteStats(data) {
     return `${h.name}: ${h.startYear}-${h.endYear + 1}`;
   });
 
-  const latestRow = rows[rows.length - 1];
+  const onCurrentTeam = currentTeamId != null
+    ? rows.filter((r) => String(r.teamId) === String(currentTeamId))
+    : rows;
+  const latestRow = onCurrentTeam[onCurrentTeam.length - 1];
   const isCurrentSeasonRow = latestRow?.season?.year === currentNhlSeasonYear();
   const num = (idx) => {
     if (!isCurrentSeasonRow) return null;
@@ -399,13 +413,13 @@ function parseNhlAthleteStats(data) {
   };
 }
 
-async function enrichNhlWithAthleteStats(players, path) {
+async function enrichNhlWithAthleteStats(players, path, teamId) {
   const toFetch = players.slice(0, 15).filter((p) => p.id);
   await Promise.all(
     toFetch.map(async (player) => {
       try {
         const data = await espn.getAthleteStats(path.sport, path.league, player.id);
-        const parsed = parseNhlAthleteStats(data);
+        const parsed = parseNhlAthleteStats(data, teamId);
         if (parsed.teamHistoryString && parsed.teamCount >= 2) {
           player.teamHistoryString = parsed.teamHistoryString;
         }
@@ -598,7 +612,7 @@ export async function loadTeamData(pickedTeam) {
 
   if (pickedTeam.league === 'NBA') {
     const nbaTasks = [
-      enrichNbaWithAthleteStats(players, path),
+      enrichNbaWithAthleteStats(players, path, pickedTeam.id),
       enrichNbaWithLastGame(pickedTeam, teamMeta, players, path),
     ];
     if (pickedTeam.bdlId) {
@@ -613,7 +627,7 @@ export async function loadTeamData(pickedTeam) {
 
   if (pickedTeam.league === 'NHL') {
     await Promise.all([
-      enrichNhlWithAthleteStats(players, path),
+      enrichNhlWithAthleteStats(players, path, pickedTeam.id),
       enrichNhlWithLastGame(pickedTeam, players, path),
     ]);
   }
@@ -623,7 +637,7 @@ export async function loadTeamData(pickedTeam) {
   }
 
   if (pickedTeam.league === 'NFL') {
-    await enrichNflWithAthleteStats(players, path);
+    await enrichNflWithAthleteStats(players, path, pickedTeam.id);
   }
 
   // Season-high enrichment for top 20% of each team's roster (used in

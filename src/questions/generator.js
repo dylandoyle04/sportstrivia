@@ -661,7 +661,7 @@ export function buildLastNightQuestions(games, rand = Math.random) {
   const nonMlbGames = games.filter((g) => g.leagueKey !== 'MLB');
   const mlbOnly = games.filter((g) => g.leagueKey === 'MLB');
   const winGameOrder = [...shuffle(nonMlbGames, rand), ...shuffle(mlbOnly, rand)];
-  for (const g of winGameOrder.slice(0, 4)) {
+  for (const g of winGameOrder.slice(0, 5)) {
     const winner = g.winner === 'home' ? g.home : g.away;
     const loser = g.winner === 'home' ? g.away : g.home;
     add(mcq(
@@ -673,9 +673,24 @@ export function buildLastNightQuestions(games, rand = Math.random) {
       rand,
     ));
   }
+  // Ensure at least 2 MLB games get a "who won" question if available
+  for (const g of shuffle(mlbOnly, rand).slice(0, 2)) {
+    const winner = g.winner === 'home' ? g.home : g.away;
+    const loser = g.winner === 'home' ? g.away : g.home;
+    add(mcq(
+      `Who won last night's ${g.home.name} vs ${g.away.name} game?`,
+      winner.name,
+      [loser.name],
+      null,
+      'easy',
+      rand,
+    ));
+  }
 
-  // 6. Final score of A vs B? (medium, 4-choice, same-league distractors)
-  for (const g of shuffle(games, rand).slice(0, 3)) {
+  // 6. Final score of A vs B? (medium, 4-choice) — exclude MLB (baseball scores
+  // are too similar to pick from). MLB games stay represented via the "Who won?" Q.
+  const scoreEligible = games.filter((g) => g.leagueKey !== 'MLB');
+  for (const g of shuffle(scoreEligible, rand).slice(0, 3)) {
     const sameLeagueScores = [...new Set(
       games.filter((og) => og.leagueKey === g.leagueKey).flatMap((og) => [
         `${og.home.score}-${og.away.score}`,
