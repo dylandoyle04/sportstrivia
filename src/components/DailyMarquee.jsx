@@ -3,7 +3,9 @@ import { getDailyLeaderboard } from '../api/supabase';
 import { todayDateString } from '../questions/seededRandom';
 
 const SEPARATOR = '  •  ';
-const PIXELS_PER_SECOND = 80;
+const PIXELS_PER_SECOND_DESKTOP = 80;
+const PIXELS_PER_SECOND_MOBILE = 120;
+const MOBILE_BREAKPOINT = 720;
 
 export default function DailyMarquee() {
   const [leaderName, setLeaderName] = useState(null);
@@ -57,7 +59,9 @@ export default function DailyMarquee() {
     };
   }, [looped]);
 
-  const duration = shiftPx > 0 ? shiftPx / PIXELS_PER_SECOND : 30;
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= MOBILE_BREAKPOINT;
+  const pxPerSec = isMobile ? PIXELS_PER_SECOND_MOBILE : PIXELS_PER_SECOND_DESKTOP;
+  const duration = shiftPx > 0 ? shiftPx / pxPerSec : 30;
   const style = shiftPx > 0
     ? { '--marquee-shift': `${shiftPx}px`, '--marquee-duration': `${duration}s` }
     : { visibility: 'hidden' };
