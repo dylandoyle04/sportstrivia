@@ -184,12 +184,13 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
   const allPlayers = [...players, ...otherPlayers];
   const pool = [];
 
-  // Position questions (easy) — only ask about top 30% players so they're well-known
+  // Position questions (easy) — only ask about top 30% players so they're well-known.
+  // Keep count low so stat H2H questions get more room in the easy bucket.
   const positionSubjects = topPercentilePlayers(team, players, 0.3);
   pool.push(...buildFieldQuestion({
     players: positionSubjects, allPlayers, field: 'position',
     promptFor: (p) => `What position does ${p.name} play?`,
-    count: 5, difficulty: 'easy',
+    count: 2, difficulty: 'easy',
   }, rand));
 
   // Jersey questions are rare and only ask about top 20% of the roster
@@ -310,7 +311,7 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
     return out;
   }
 
-  pool.push(...buildStatHeadToHead('ppg', 'Who averages more points per game this season?', 0.3, 'easy', 4, { maxGap: 4 }));
+  pool.push(...buildStatHeadToHead('ppg', 'Who averages more points per game this season?', 0.3, 'easy', 6, { maxGap: 4 }));
   pool.push(...buildStatHeadToHead('apg', 'Who averages more assists per game this season?', 0.2, 'hard', 4, { maxGap: 2.5 }));
   pool.push(...buildStatHeadToHead('rpg', 'Who averages more rebounds per game this season?', 0.2, 'hard', 4, { maxGap: 3 }));
 
@@ -321,19 +322,19 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
   const isRusher = (p) => ['QB', 'RB'].includes(p.positionAbbr);
   const isReceiver = (p) => ['WR', 'TE', 'RB'].includes(p.positionAbbr);
 
-  pool.push(...buildStatHeadToHead('homeRuns', 'Who has more home runs this season?', 1, 'medium', 4, { position: isHitter, maxGap: 8 }));
+  pool.push(...buildStatHeadToHead('homeRuns', 'Who has more home runs this season?', 1, 'easy', 4, { position: isHitter, maxGap: 8 }));
   pool.push(...buildStatHeadToHead('hits', 'Who has more hits this season?', 3, 'medium', 4, { position: isHitter, maxGap: 18 }));
   pool.push(...buildStatHeadToHead('battingAvg', 'Who has the higher batting average this season?', 0.012, 'hard', 3, { position: isHitter, maxGap: 0.040 }));
   pool.push(...buildStatHeadToHead('era', 'Whose ERA is lower this season?', 0.2, 'medium', 4, { direction: 'lower', position: isPitcher, maxGap: 0.9 }));
 
-  pool.push(...buildStatHeadToHead('seasonGoals', 'Who has more goals this season?', 1, 'medium', 4, { position: isSkater, maxGap: 8 }));
+  pool.push(...buildStatHeadToHead('seasonGoals', 'Who has more goals this season?', 1, 'easy', 4, { position: isSkater, maxGap: 8 }));
   pool.push(...buildStatHeadToHead('seasonAssists', 'Who has more assists this season?', 2, 'medium', 4, { position: isSkater, maxGap: 12 }));
   pool.push(...buildStatHeadToHead('seasonPoints', 'Who has more points this season?', 2, 'medium', 4, { position: isSkater, maxGap: 15 }));
 
   pool.push(...buildStatHeadToHead('passingYards', 'Who has more passing yards this season?', 100, 'medium', 2, { position: isQb, maxGap: 800 }));
-  pool.push(...buildStatHeadToHead('passingTds', 'Who has more passing touchdowns this season?', 1, 'medium', 2, { position: isQb, maxGap: 6 }));
+  pool.push(...buildStatHeadToHead('passingTds', 'Who has more passing touchdowns this season?', 1, 'easy', 3, { position: isQb, maxGap: 6 }));
   pool.push(...buildStatHeadToHead('rushingYards', 'Who has more rushing yards this season?', 50, 'medium', 3, { position: isRusher, maxGap: 350 }));
-  pool.push(...buildStatHeadToHead('rushingTds', 'Who has more rushing touchdowns this season?', 1, 'hard', 2, { position: isRusher, maxGap: 4 }));
+  pool.push(...buildStatHeadToHead('rushingTds', 'Who has more rushing touchdowns this season?', 1, 'easy', 3, { position: isRusher, maxGap: 4 }));
   pool.push(...buildStatHeadToHead('receivingYards', 'Who has more receiving yards this season?', 50, 'medium', 3, { position: isReceiver, maxGap: 350 }));
   pool.push(...buildStatHeadToHead('receivingTds', 'Who has more receiving touchdowns this season?', 1, 'hard', 3, { position: isReceiver, maxGap: 5 }));
   pool.push(...buildStatHeadToHead('receptions', 'Who has more receptions this season?', 2, 'medium', 3, { position: isReceiver, maxGap: 14 }));
