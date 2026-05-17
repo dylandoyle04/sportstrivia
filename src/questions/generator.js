@@ -244,11 +244,14 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
     }, rand));
   }
 
-  pool.push(...buildFieldQuestion({
-    players, allPlayers, field: 'age',
-    promptFor: (p) => `How old is ${p.name}?`,
-    count: 1, difficulty: 'medium',
-  }, rand));
+  // Age questions are rare — too dry to feature every round
+  if (rand() < 0.3) {
+    pool.push(...buildFieldQuestion({
+      players, allPlayers, field: 'age',
+      promptFor: (p) => `How old is ${p.name}?`,
+      count: 1, difficulty: 'medium',
+    }, rand));
+  }
 
   // Height question — distractors must be > 3 inches apart from correct AND each other
   const heightSubjects = players.filter((p) => p.height && p.name);
@@ -360,7 +363,8 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
   const isHitter = (p) => !isPitcher(p);
   const isSkater = (p) => p.positionAbbr !== 'G';
   const isQb = (p) => p.positionAbbr === 'QB';
-  const isRusher = (p) => ['QB', 'RB'].includes(p.positionAbbr);
+  // Rushing Qs ask about RBs only — QBs belong in passing questions
+  const isRusher = (p) => p.positionAbbr === 'RB';
   const isReceiver = (p) => ['WR', 'TE', 'RB'].includes(p.positionAbbr);
 
   pool.push(...buildStatHeadToHead('homeRuns', 'Who has more home runs this season?', 1, 'easy', 4, { position: isHitter, maxGap: 8 }));
