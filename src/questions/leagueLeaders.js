@@ -22,7 +22,7 @@ export async function nflLeaderQuestions(rand) {
       receivingYards: { prompt: `Who led the NFL in receiving yards in ${LAST_SEASON_NFL}?`, difficulty: 'medium' },
       interceptions: { prompt: `Who led the NFL in interceptions in ${LAST_SEASON_NFL}?`, difficulty: 'hard' },
       sacks: { prompt: `Who led the NFL in sacks in ${LAST_SEASON_NFL}?`, difficulty: 'hard' },
-    }, rand));
+    }, rand, 'NFL'));
   } catch { /* optional */ }
   try {
     const cur = await getEspnLeaders('football', 'nfl', CURRENT_SEASON_NFL, [
@@ -32,7 +32,7 @@ export async function nflLeaderQuestions(rand) {
       passingTouchdowns: { prompt: 'Who is leading the NFL in passing touchdowns this season?', difficulty: 'medium' },
       sacks: { prompt: 'Who is leading the NFL in sacks this season?', difficulty: 'hard' },
       interceptions: { prompt: 'Who is leading the NFL in interceptions this season?', difficulty: 'hard' },
-    }, rand));
+    }, rand, 'NFL'));
   } catch { /* optional */ }
   return out;
 }
@@ -49,7 +49,7 @@ export async function nbaLeaderQuestions(rand) {
       reboundsPerGame: { prompt: 'Who led the NBA in rebounds per game last season?', difficulty: 'hard' },
       blocksPerGame: { prompt: 'Who led the NBA in blocks per game last season?', difficulty: 'hard' },
       stealsPerGame: { prompt: 'Who led the NBA in steals per game last season?', difficulty: 'hard' },
-    }, rand));
+    }, rand, 'NBA'));
   } catch { /* optional */ }
   return out;
 }
@@ -67,7 +67,7 @@ export async function nhlLeaderQuestions(rand) {
       savePct: { prompt: 'Which goalie led the NHL in save percentage last season?', difficulty: 'hard' },
       wins: { prompt: 'Which goalie led the NHL in wins last season?', difficulty: 'hard' },
       shutouts: { prompt: 'Which goalie led the NHL in shutouts last season?', difficulty: 'hard' },
-    }, rand));
+    }, rand, 'NHL'));
   } catch { /* optional */ }
   try {
     const cur = await getEspnLeaders('hockey', 'nhl', CURRENT_SEASON_NHL, [
@@ -76,7 +76,7 @@ export async function nhlLeaderQuestions(rand) {
     out.push(...buildLeaderQuestions(cur, {
       savePct: { prompt: 'Which goalie has the highest save percentage this season?', difficulty: 'hard' },
       wins: { prompt: 'Which goalie has the most wins this season?', difficulty: 'hard' },
-    }, rand));
+    }, rand, 'NHL'));
   } catch { /* optional */ }
   return out;
 }

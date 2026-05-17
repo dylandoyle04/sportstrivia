@@ -19,7 +19,7 @@ import {
   mlbLastSeasonLeaderQuestions,
 } from './leagueLeaders';
 
-const DAILY_TEAM_COUNT = 8;
+const DAILY_LEAGUE_QUOTA = { NFL: 2, NBA: 2, NHL: 2, MLB: 2 };
 
 function seededShuffle(arr, rand) {
   const copy = [...arr];
@@ -30,9 +30,18 @@ function seededShuffle(arr, rand) {
   return copy;
 }
 
-export function pickDailyTeams(dateStr, n = DAILY_TEAM_COUNT) {
+// Balanced league picker: 2 teams from each of NFL/NBA/NHL/MLB = 8 teams.
+// Soccer is excluded from the daily team rotation so dailies stay focused
+// on the four major leagues; soccer star trivia lives in League Trivia /
+// Free Play modes instead.
+export function pickDailyTeams(dateStr) {
   const rand = createRng(dateSeed(dateStr) ^ 0xA1B2C3);
-  return seededShuffle(TEAMS, rand).slice(0, n);
+  const out = [];
+  for (const [league, count] of Object.entries(DAILY_LEAGUE_QUOTA)) {
+    const teamsInLeague = TEAMS.filter((t) => t.league === league);
+    out.push(...seededShuffle(teamsInLeague, rand).slice(0, count));
+  }
+  return out;
 }
 
 export async function loadDailyQuiz(dateStr) {

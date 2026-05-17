@@ -134,12 +134,32 @@ export function selectByMix(pool, mix, rand = Math.random) {
  */
 export function selectByMixUniqueTeams(pool, mix, rand = Math.random) {
   const MAX_PER_TEAM = 3;
+  const MAX_PER_LEAGUE = 3;
   const teamCounts = new Map();
+  const leagueCounts = new Map();
   const teamOf = (q) => q.player?.team?.name ?? null;
-  const countFor = (k) => (k ? teamCounts.get(k) ?? 0 : 0);
+  const leagueOf = (q) => q.player?.team?.league ?? null;
+  const teamCountFor = (k) => (k ? teamCounts.get(k) ?? 0 : 0);
+  const leagueCountFor = (l) => (l ? leagueCounts.get(l) ?? 0 : 0);
+  const isFresh = (q) => {
+    const t = teamOf(q);
+    const l = leagueOf(q);
+    if (t && teamCountFor(t) > 0) return false;
+    if (l && leagueCountFor(l) > 0) return false;
+    return true;
+  };
+  const canTake = (q) => {
+    const t = teamOf(q);
+    const l = leagueOf(q);
+    if (t && teamCountFor(t) >= MAX_PER_TEAM) return false;
+    if (l && leagueCountFor(l) >= MAX_PER_LEAGUE) return false;
+    return true;
+  };
   const record = (q) => {
-    const k = teamOf(q);
-    if (k) teamCounts.set(k, countFor(k) + 1);
+    const t = teamOf(q);
+    const l = leagueOf(q);
+    if (t) teamCounts.set(t, teamCountFor(t) + 1);
+    if (l) leagueCounts.set(l, leagueCountFor(l) + 1);
   };
 
   const byDiff = {
@@ -156,21 +176,17 @@ export function selectByMixUniqueTeams(pool, mix, rand = Math.random) {
     const taken = [];
     const remaining = [];
 
-    // First pass: only take if this team hasn't been used yet anywhere
+    // First pass: only take if this team AND league haven't been used yet
     for (const q of byDiff[diff]) {
       if (taken.length >= want) { remaining.push(q); continue; }
-      const k = teamOf(q);
-      if (k && countFor(k) > 0) { remaining.push(q); continue; }
+      if (!isFresh(q)) { remaining.push(q); continue; }
       taken.push(q);
       record(q);
     }
 
-    // Second pass: backfill from remaining, capped at MAX_PER_TEAM per team
+    // Second pass: backfill from remaining, capped per team and per league
     while (taken.length < want) {
-      const idx = remaining.findIndex((q) => {
-        const k = teamOf(q);
-        return !k || countFor(k) < MAX_PER_TEAM;
-      });
+      const idx = remaining.findIndex(canTake);
       if (idx < 0) break;
       const q = remaining.splice(idx, 1)[0];
       taken.push(q);
@@ -181,7 +197,7 @@ export function selectByMixUniqueTeams(pool, mix, rand = Math.random) {
     overflow.push(...remaining);
   }
 
-  // Cross-difficulty backfill, still respecting per-team cap
+  // Cross-difficulty backfill, still respecting per-team / per-league caps
   const desiredTotal = Object.values(mix).reduce((a, b) => a + b, 0);
   if (result.length < desiredTotal) {
     const seen = new Set(result.map((q) => q.prompt));
@@ -190,10 +206,7 @@ export function selectByMixUniqueTeams(pool, mix, rand = Math.random) {
       rand,
     );
     while (result.length < desiredTotal) {
-      const idx = fillers.findIndex((q) => {
-        const k = teamOf(q);
-        return !k || countFor(k) < MAX_PER_TEAM;
-      });
+      const idx = fillers.findIndex(canTake);
       if (idx < 0) break;
       const q = fillers.splice(idx, 1)[0];
       result.push(q);
@@ -653,13 +666,14 @@ export function generateQuestions(data, options = {}) {
 
 export function buildMlbLeaderQuestions(leadersByCategory, rand = Math.random, suffix = ' this season') {
   const out = [];
+  const leagueTag = { team: { league: 'MLB' } };
   function add(leaders, prompt, difficulty) {
     if (!leaders || leaders.length < 4) return;
     const top = leaders[0];
     const others = leaders.slice(1).filter((l) => l.name !== top.name);
     const distractors = pickN(others, 3, rand);
     if (distractors.length !== 3) return;
-    out.push(mcq(prompt, top.name, distractors.map((d) => d.name), null, difficulty, rand));
+    out.push(mcq(prompt, top.name, distractors.map((d) => d.name), leagueTag, difficulty, rand));
   }
   if (suffix === ' this season') {
     add(leadersByCategory.homeRuns, 'Who is leading MLB in home runs this season?', 'medium');
@@ -905,8 +919,9 @@ export function buildLastNightQuestions(games, rand = Math.random) {
   return shuffle(out, rand);
 }
 
-export function buildLeaderQuestions(leadersByCategory, prompts, rand = Math.random) {
+export function buildLeaderQuestions(leadersByCategory, prompts, rand = Math.random, league = null) {
   const out = [];
+  const leagueTag = league ? { team: { league } } : null;
   for (const [cat, def] of Object.entries(prompts)) {
     const leaders = leadersByCategory[cat];
     if (!leaders || leaders.length < 4) continue;
@@ -915,7 +930,7 @@ export function buildLeaderQuestions(leadersByCategory, prompts, rand = Math.ran
     if (distractors.length !== 3) continue;
     const prompt = typeof def === 'string' ? def : def.prompt;
     const difficulty = typeof def === 'string' ? 'medium' : (def.difficulty ?? 'medium');
-    out.push(mcq(prompt, top.name, distractors.map((d) => d.name), null, difficulty, rand));
+    out.push(mcq(prompt, top.name, distractors.map((d) => d.name), leagueTag, difficulty, rand));
   }
   return out;
 }
@@ -950,6 +965,7 @@ export function buildNhlTeamStatQuestions(standings, rand = Math.random) {
   const east = standings.filter((t) => t.conference === 'Eastern Conference');
   const west = standings.filter((t) => t.conference === 'Western Conference');
   const out = [];
+  const leagueTag = { team: { league: 'NHL' } };
 
   function leader(teams, key, direction) {
     if (!teams || teams.length === 0) return null;
@@ -966,7 +982,7 @@ export function buildNhlTeamStatQuestions(standings, rand = Math.random) {
     if (!top) return;
     const distractors = pickN(pool.filter((t) => t.id !== top.id), 3, rand);
     if (distractors.length !== 3) return;
-    out.push(mcq(prompt, top.name, distractors.map((d) => d.name), null, difficulty, rand));
+    out.push(mcq(prompt, top.name, distractors.map((d) => d.name), leagueTag, difficulty, rand));
   }
 
   add(east, 'points', 'max', 'Which team has the most standings points in the NHL Eastern Conference this season?', 'medium');
@@ -981,6 +997,7 @@ export function buildNbaTeamStatQuestions(standings, rand = Math.random) {
   const east = standings.filter((t) => t.conference === 'Eastern Conference');
   const west = standings.filter((t) => t.conference === 'Western Conference');
   const out = [];
+  const leagueTag = { team: { league: 'NBA' } };
 
   function leader(teams, key, direction = 'max') {
     if (!teams || teams.length === 0) return null;
@@ -997,7 +1014,7 @@ export function buildNbaTeamStatQuestions(standings, rand = Math.random) {
     if (!top) return;
     const distractors = pickN(pool.filter((t) => t.id !== top.id), 3, rand);
     if (distractors.length !== 3) return;
-    out.push(mcq(prompt, top.name, distractors.map((d) => d.name), null, difficulty, rand));
+    out.push(mcq(prompt, top.name, distractors.map((d) => d.name), leagueTag, difficulty, rand));
   }
 
   addLeaderQuestion(east, 'leagueWinPercent', 'max',
