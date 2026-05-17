@@ -127,44 +127,61 @@ export function selectByMix(pool, mix, rand = Math.random) {
 }
 
 /**
- * Like selectByMix but caps each team to at most one question across the
- * entire returned set. Cross-league questions (no player.team) are unbounded.
+ * Like selectByMix but limits each team's representation across the entire
+ * returned set. First pass prefers unique teams; backfill caps each team at
+ * MAX_PER_TEAM; emergency fill only if pool can't reach desired total.
+ * Cross-league questions (player == null) are unbounded.
  */
 export function selectByMixUniqueTeams(pool, mix, rand = Math.random) {
+  const MAX_PER_TEAM = 3;
+  const teamCounts = new Map();
+  const teamOf = (q) => q.player?.team?.name ?? null;
+  const countFor = (k) => (k ? teamCounts.get(k) ?? 0 : 0);
+  const record = (q) => {
+    const k = teamOf(q);
+    if (k) teamCounts.set(k, countFor(k) + 1);
+  };
+
   const byDiff = {
     easy: shuffle(pool.filter((q) => q.difficulty === 'easy'), rand),
     medium: shuffle(pool.filter((q) => q.difficulty === 'medium'), rand),
     hard: shuffle(pool.filter((q) => q.difficulty === 'hard'), rand),
   };
-  const usedTeams = new Set();
+
   const result = [];
   const overflow = [];
 
   for (const diff of ['easy', 'medium', 'hard']) {
     const want = mix[diff] ?? 0;
     const taken = [];
-    const skipped = [];
+    const remaining = [];
+
+    // First pass: only take if this team hasn't been used yet anywhere
     for (const q of byDiff[diff]) {
-      const key = q.player?.team?.name;
-      if (taken.length >= want) {
-        skipped.push(q);
-        continue;
-      }
-      if (key && usedTeams.has(key)) {
-        skipped.push(q);
-        continue;
-      }
+      if (taken.length >= want) { remaining.push(q); continue; }
+      const k = teamOf(q);
+      if (k && countFor(k) > 0) { remaining.push(q); continue; }
       taken.push(q);
-      if (key) usedTeams.add(key);
+      record(q);
     }
-    while (taken.length < want && skipped.length > 0) {
-      taken.push(skipped.shift());
+
+    // Second pass: backfill from remaining, capped at MAX_PER_TEAM per team
+    while (taken.length < want) {
+      const idx = remaining.findIndex((q) => {
+        const k = teamOf(q);
+        return !k || countFor(k) < MAX_PER_TEAM;
+      });
+      if (idx < 0) break;
+      const q = remaining.splice(idx, 1)[0];
+      taken.push(q);
+      record(q);
     }
+
     result.push(...taken);
-    overflow.push(...skipped);
+    overflow.push(...remaining);
   }
 
-  // Final cross-difficulty backfill so we always reach the desired total
+  // Cross-difficulty backfill, still respecting per-team cap
   const desiredTotal = Object.values(mix).reduce((a, b) => a + b, 0);
   if (result.length < desiredTotal) {
     const seen = new Set(result.map((q) => q.prompt));
@@ -172,6 +189,17 @@ export function selectByMixUniqueTeams(pool, mix, rand = Math.random) {
       overflow.filter((q) => !seen.has(q.prompt)),
       rand,
     );
+    while (result.length < desiredTotal) {
+      const idx = fillers.findIndex((q) => {
+        const k = teamOf(q);
+        return !k || countFor(k) < MAX_PER_TEAM;
+      });
+      if (idx < 0) break;
+      const q = fillers.splice(idx, 1)[0];
+      result.push(q);
+      record(q);
+    }
+    // Last-resort fill (allow over cap) so we never ship fewer than 10
     while (result.length < desiredTotal && fillers.length > 0) {
       result.push(fillers.shift());
     }
