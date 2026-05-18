@@ -153,7 +153,7 @@ function spreadByTeam(questions, rand) {
 }
 
 export function selectByMixUniqueTeams(pool, mix, rand = Math.random) {
-  const MAX_PER_TEAM = 2;
+  const MAX_PER_TEAM = 3;
   const MAX_PER_LEAGUE = 3;
   const teamCounts = new Map();
   const leagueCounts = new Map();
