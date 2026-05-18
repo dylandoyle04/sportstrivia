@@ -132,8 +132,28 @@ export function selectByMix(pool, mix, rand = Math.random) {
  * MAX_PER_TEAM; emergency fill only if pool can't reach desired total.
  * Cross-league questions (player == null) are unbounded.
  */
+// Re-orders questions so two from the same team are never adjacent when
+// avoidable. Greedy: walk the list, and if a position matches its
+// predecessor's team, swap it with the next question that has a different
+// team.
+function spreadByTeam(questions, rand) {
+  const result = shuffle(questions, rand);
+  for (let i = 1; i < result.length; i++) {
+    const prev = result[i - 1].player?.team?.name;
+    if (!prev) continue;
+    if (result[i].player?.team?.name !== prev) continue;
+    for (let j = i + 1; j < result.length; j++) {
+      if (result[j].player?.team?.name !== prev) {
+        [result[i], result[j]] = [result[j], result[i]];
+        break;
+      }
+    }
+  }
+  return result;
+}
+
 export function selectByMixUniqueTeams(pool, mix, rand = Math.random) {
-  const MAX_PER_TEAM = 3;
+  const MAX_PER_TEAM = 2;
   const MAX_PER_LEAGUE = 3;
   const teamCounts = new Map();
   const leagueCounts = new Map();
@@ -218,7 +238,7 @@ export function selectByMixUniqueTeams(pool, mix, rand = Math.random) {
     }
   }
 
-  return shuffle(result, rand);
+  return spreadByTeam(result, rand);
 }
 
 export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.random) {
@@ -234,8 +254,9 @@ export function buildQuestionPool({ team, players, otherPlayers }, rand = Math.r
     count: 2, difficulty: 'easy',
   }, rand));
 
-  // Jersey questions are rare and only ask about top 20% of the roster
-  if (rand() < 0.35) {
+  // Jersey questions are rare and only ask about top 20% of the roster.
+  // Skip MLB — most baseball players aren't well-known enough by jersey #.
+  if (team.league !== 'MLB' && rand() < 0.35) {
     const eliteJersey = topPercentilePlayers(team, players, 0.2);
     pool.push(...buildFieldQuestion({
       players: eliteJersey, allPlayers, field: 'jersey',
