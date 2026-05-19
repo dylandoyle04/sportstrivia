@@ -712,7 +712,7 @@ export function buildMlbLeaderQuestions(leadersByCategory, rand = Math.random, s
     add(leadersByCategory.era, `Who had the lowest ERA in MLB${suffix}?`, 'hard');
     add(leadersByCategory.hits, `Who led MLB in hits${suffix}?`, 'medium');
   }
-  return out;
+  return shuffle(out, rand).slice(0, 2);
 }
 
 export function buildLastNightQuestions(games, rand = Math.random) {
@@ -957,7 +957,7 @@ export function buildLeaderQuestions(leadersByCategory, prompts, rand = Math.ran
     const difficulty = typeof def === 'string' ? 'medium' : (def.difficulty ?? 'medium');
     out.push(mcq(prompt, top.name, distractors.map((d) => d.name), leagueTag, difficulty, rand));
   }
-  return out;
+  return shuffle(out, rand).slice(0, 2);
 }
 
 export function buildSoccerTeamStatQuestions(standings, competition, rand = Math.random) {
@@ -982,7 +982,7 @@ export function buildSoccerTeamStatQuestions(standings, competition, rand = Math
   add('points', 'max', `Which team has the most points in ${competition} this season?`, 'medium');
   add('pointsFor', 'max', `Which team has scored the most goals in ${competition} this season?`, 'medium');
   add('pointsAgainst', 'min', `Which team has conceded the fewest goals in ${competition} this season?`, 'hard');
-  return out;
+  return shuffle(out, rand).slice(0, 2);
 }
 
 export function buildNhlTeamStatQuestions(standings, rand = Math.random) {
@@ -1014,7 +1014,7 @@ export function buildNhlTeamStatQuestions(standings, rand = Math.random) {
   add(west, 'points', 'max', 'Which team has the most standings points in the NHL Western Conference this season?', 'medium');
   add(standings, 'pointsAgainst', 'min', 'Which NHL team has allowed the fewest goals this season?', 'hard');
   add(standings, 'pointsFor', 'max', 'Which NHL team has scored the most goals this season?', 'medium');
-  return out;
+  return shuffle(out, rand).slice(0, 2);
 }
 
 export function buildNbaTeamStatQuestions(standings, rand = Math.random) {
@@ -1053,5 +1053,5 @@ export function buildNbaTeamStatQuestions(standings, rand = Math.random) {
   addLeaderQuestion(standings, 'pointDifferential', 'max',
     'Which NBA team has the best point differential this season?', 'hard');
 
-  return out;
+  return shuffle(out, rand).slice(0, 2);
 }
