@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import TeamPicker from './components/TeamPicker';
 import QuizScreen from './components/QuizScreen';
 import ScoreScreen from './components/ScoreScreen';
-import SignIn from './components/SignIn';
-import VerifyCode from './components/VerifyCode';
+import NameGate from './components/NameGate';
 import HomeScreen from './components/HomeScreen';
 import OtherModes from './components/OtherModes';
 import ComingSoon from './components/ComingSoon';
@@ -15,7 +14,8 @@ import CollegeMode from './components/CollegeMode';
 import LeagueMode from './components/LeagueMode';
 import LeaderboardScreen from './components/LeaderboardScreen';
 import SynthwaveBg from './components/SynthwaveBg';
-import { supabase, upsertProfile } from './api/supabase';
+import { upsertProfile } from './api/supabase';
+import { loadIdentity, saveIdentity, clearIdentity } from './lib/identity';
 import './App.css';
 
 const STUB_TITLES = {
@@ -26,9 +26,8 @@ const STUB_TITLES = {
 };
 
 export default function App() {
-  const [authStatus, setAuthStatus] = useState('loading');
-  const [session, setSession] = useState(null);
-  const [pending, setPending] = useState(null);
+  const [identity, setIdentity] = useState(() => loadIdentity());
+  const [changingName, setChangingName] = useState(false);
 
   const [screen, setScreen] = useState('home');
   const [stubKey, setStubKey] = useState(null);
@@ -37,26 +36,19 @@ export default function App() {
   const [groupId, setGroupId] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setAuthStatus(data.session ? 'authed' : 'anon');
-    });
+    if (!identity) return;
+    upsertProfile({
+      id: identity.id,
+      email: `${identity.id}@guest.local`,
+      displayName: identity.name,
+    }).catch(() => {});
+  }, [identity]);
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      setAuthStatus(s ? 'authed' : 'anon');
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const user = session?.user;
-    const name = user?.user_metadata?.display_name;
-    if (user && name) {
-      upsertProfile({ id: user.id, email: user.email, displayName: name });
-    }
-  }, [session]);
+  function handleEnterName(name) {
+    const saved = saveIdentity({ name });
+    setIdentity(saved);
+    setChangingName(false);
+  }
 
   function handleHomeSelect(key) {
     if (key === 'other') {
@@ -117,42 +109,35 @@ export default function App() {
     setScreen('home');
   }
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    setPending(null);
+  function handleChangeName() {
+    setChangingName(true);
+  }
+
+  function handleClearIdentity() {
+    clearIdentity();
+    setIdentity(null);
+    setChangingName(false);
     setStubKey(null);
     setTeam(null);
     setResult({ score: 0, total: 0 });
     setScreen('home');
   }
 
-  if (authStatus === 'loading') {
-    return (
-      <>
-        <SynthwaveBg />
-        <main className="app"><div className="loader">Loading…</div></main>
-      </>
-    );
-  }
-
-  if (authStatus === 'anon') {
+  if (!identity || changingName) {
     return (
       <>
         <SynthwaveBg />
         <main className="app">
-          {!pending && <SignIn onCodeSent={setPending} />}
-          {pending && (
-            <VerifyCode
-              email={pending.email}
-              onBack={() => setPending(null)}
-            />
-          )}
+          <NameGate
+            onEnter={handleEnterName}
+            initialName={changingName ? identity?.name ?? '' : ''}
+          />
         </main>
       </>
     );
   }
 
-  const displayName = session?.user?.user_metadata?.display_name ?? session?.user?.email ?? '';
+  const displayName = identity.name;
 
   return (
     <>
@@ -164,19 +149,19 @@ export default function App() {
         )}
         <span className="app-header-title">Do You Know Ball?</span>
         <span className="app-header-name">{displayName}</span>
-        <button className="back-btn" onClick={handleLogout}>Log out</button>
+        <button className="back-btn" onClick={handleChangeName}>Change name</button>
       </header>
 
       {screen === 'home' && <HomeScreen onSelect={handleHomeSelect} />}
       {screen === 'daily' && (
-        <DailyTrivia userId={session.user.id} onBack={goHome} />
+        <DailyTrivia userId={identity.id} onBack={goHome} />
       )}
       {screen === 'last-night' && (
-        <LastNight userId={session.user.id} onBack={goHome} />
+        <LastNight userId={identity.id} onBack={goHome} />
       )}
       {screen === 'group-hub' && (
         <GroupHub
-          userId={session.user.id}
+          userId={identity.id}
           onSelectGroup={(id) => { setGroupId(id); setScreen('group-detail'); }}
           onBack={goHome}
         />
@@ -184,13 +169,13 @@ export default function App() {
       {screen === 'group-detail' && groupId && (
         <GroupDetail
           groupId={groupId}
-          userId={session.user.id}
+          userId={identity.id}
           onBack={() => { setGroupId(null); setScreen('group-hub'); }}
         />
       )}
       {screen === 'college' && (
         <CollegeMode
-          userId={session.user.id}
+          userId={identity.id}
           onBack={() => setScreen('other-modes')}
         />
       )}
@@ -198,7 +183,7 @@ export default function App() {
         <LeagueMode onBack={() => setScreen('other-modes')} />
       )}
       {screen === 'leaderboard' && (
-        <LeaderboardScreen userId={session.user.id} onBack={goHome} />
+        <LeaderboardScreen userId={identity.id} onBack={goHome} />
       )}
       {screen === 'other-modes' && (
         <OtherModes onSelect={handleOtherSelect} onBack={goHome} />
